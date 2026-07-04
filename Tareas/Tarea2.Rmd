@@ -1,0 +1,73 @@
+---
+title: "Tarea 2 Mineria"
+author: "Agustin Vilches"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+# Instalación de paquetes
+packages <- c(
+  "tidyverse",
+  "tidymodels",
+  "glmnet",
+  "MASS",
+  "broom",
+  "pROC",
+  "yardstick",
+  "palmerpenguins",
+  "titanic",
+  "modeldata",
+  "factoextra",
+  "cluster",
+  "ggrepel"
+)
+
+installed <- rownames(installed.packages())
+to_install <- setdiff(packages, installed)
+
+if (length(to_install) > 0) {
+  install.packages(
+    to_install,
+    repos = "https://cloud.r-project.org",
+    dependencies = c("Depends", "Imports")
+  )
+}
+# Carga de paquetes
+library(tidyverse)
+library(tidymodels)
+library(glmnet)
+library(MASS)
+library(broom)
+library(pROC)
+library(yardstick)
+library(palmerpenguins)
+library(titanic)
+library(modeldata)
+library(factoextra)
+library(cluster)
+library(ggrepel)
+```
+
+# Problema 1
+
+### 1.1 Exploración y limpieza
+a)  Cargue el dataset y describa sus dimensiones, tipos de variables y porcentaje de valores perdidos por columna.
+```{r Inciso 1.1 a)}
+# Para conocer dimensiones y tipos de variables:
+glimpse(titanic_train)
+
+# Para calcular el porcentaje de valores perdidos por columna
+titanic_train %>%
+  summarise(across(everything(), ~ mean(is.na(.)) * 100)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Porcentaje_NA") %>%
+  arrange(desc(Porcentaje_NA))
+```
+> El dataset consta de 12 columnas con 891 filas, dónde existen variables numéricas y de texto, y la única columna que presenta pérdida de datos es `Age`, con casi un 20% de sus datos perdidos.
+
+b)Limpie los datos considerando al menos las variables:
+`Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked`
