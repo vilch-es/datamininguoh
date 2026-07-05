@@ -71,3 +71,428 @@ titanic_train %>%
 
 b)Limpie los datos considerando al menos las variables:
 `Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked`
+
+# Problema 2 
+
+### 2.1 Preparación de datos
+a) Cargue el dataset y describa sus variables.
+```{r Inciso 2.1 a)}
+glimpse(penguins)
+  
+```
+
+b) Seleccione las variables morfológicas numéricas.
+
+```{r Inciso 2.1 b)}
+penguins_num <- penguins %>%
+  dplyr::select(where(is.numeric)) %>%
+  dplyr::select(-year) %>%
+  janitor::clean_names()
+
+glimpse(penguins_num)
+```
+c) Elimine o impute valores perdidos. Justifique su decisión.
+
+```{r Inciso 2.1 c)}
+#Consultamos el porcentaje de valores perdidos para tomar una decisión
+penguins_num %>%
+  summarise(across(everything(), ~ mean(is.na(.)) * 100)) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Porcentaje_NA") %>%
+  arrange(desc(Porcentaje_NA))
+
+#Eliminamos las filas con valores pérdidos
+penguins_num_clean <- penguins_num %>%
+  drop_na()
+
+```
+El resultado nos indica que el porcentaje de valores pérdidos es mínimo. Además, como todas las variables comparten porcentaje, podemos inferir que estos valores pérdidos ocurren en las mismas filas. Por lo que se decide eliminarlos para evitar inventar datos.
+
+d) Estandarice las variables antes de aplicar PCA y clustering
+```{r Inciso 2.1 d)}
+penguins_escalado <- penguins_num_clean %>%
+  mutate(across(everything(), ~ as.numeric(scale(.))))
+
+head(penguins_escalado)
+```
+Es importante este paso, porque variables con unidades grandes, en este caso el peso el cual ronda los 4000, tendrán mas importancia en los análisis sobre el resto de variables, las cuales no superan los 300.
+
+
+### 2.2. Visualización exploratoria
+
+a) Distribución de la masa corporal por especie.
+```{r Inciso 2.2 a)}
+penguins  %>%
+  filter(!is.na(body_mass_g)) %>%
+  ggplot(aes(x = body_mass_g, fill = species))+
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Distribución del retraso de salida",
+    x = "Peso",
+    y = "Densidad",
+    fill = "Especies"
+  )
+```
+Los pingüinos pertenecientes a la especie Gentoo tienden a pesar considerablemente más que los pingüinos pertenecientes a las especies Adelie y Chinstrap. Estos últimos tienen pesos muy similares.
+
+
+b) Relación entre la longitud y la profundidad del pico.
+
+```{r Inciso 2.2 b)}
+penguins %>%
+  filter(!is.na(bill_length_mm), !is.na(bill_depth_mm)) %>%
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point(alpha = 0.3) +
+  facet_wrap( ~ species) +
+  labs(
+    title = "Longitud vs Profundidad del Pico",
+    x = "Longitud",
+    y = "Profundidad"
+  )
+```
+En primera instancia no parece existir correlación entre la longitud y profundidad, pero si separamos el gráfico por especies, podemos notar que entre mayor es la longitud, mayor es la profundidad del pico del pingüino.
+
+
+c) Relación entre el largo de aleta y la masa corporal.
+```{r Inciso 2.2 c)}
+penguins %>%
+  filter(!is.na(flipper_length_mm), !is.na(body_mass_g)) %>%
+  ggplot(aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point(alpha = 0.3) +
+  labs(
+    title = "Largo de Aleta vs Masa Corporal",
+    x = "Largo de Aleta",
+    y = "Masa Corporal"
+  )
+```
+El largo de la aleta parece influir en la masa corporal del pingüino.
+
+
+d) Diferencias morfológicas por isla.
+
+```{r Inciso 2.2 d)}
+penguins %>%
+  pivot_longer(
+    cols = c(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g),
+    names_to = "Caracteristica",
+    values_to = "Valor"
+  ) %>%
+  filter(!is.na(Valor)) %>% 
+  ggplot(aes(x = island, y = Valor, fill = island)) +
+  geom_boxplot() +
+  facet_wrap(~ Caracteristica, scales = "free_y", ncol = 2) +
+  labs(
+    title = "Diferencias morfológicas de los pingüinos por Isla",
+    x = "Isla",
+    y = "Valor de la Medida",
+    fill = "Isla"
+  ) +
+  theme_minimal() 
+```
+Los pingüinos provenientes de la isla Biscoe tienden a ser más grandes, por lo que seguramente en esa isla habita principalmente la especie Gentoo. No tenemos suficiente información para inferir en que isla se encuentra la mayor cantidad de las otras dos especies.
+
+
+### 2.3. PCA
+
+```{r Inciso 2.3)}
+pca_penguins <- prcomp(penguins_escalado)
+
+pca_var <- pca_penguins$sdev^2
+pca_var_exp <- pca_var / sum(pca_var)
+pca_var_cum <- cumsum(pca_var_exp)
+
+pca_summary <- tibble(
+  PC = paste0("PC", seq_along(pca_var_exp)),
+  varianza_explicada = pca_var_exp,
+  varianza_acumulada = pca_var_cum
+)
+
+loadings_penguins <- as.data.frame(pca_penguins$rotation) %>%
+  rownames_to_column("variable")
+
+loadings_penguins %>%
+  dplyr::select(variable, PC1, PC2, PC3, PC4) %>%
+  arrange(desc(abs(PC1))) %>%
+  head(4)
+```
+a) ¿Qué porcentaje de varianza explica PC1?
+PC1 explica un 68,8% de la varianza.
+
+b) ¿Qué porcentaje de varianza explica PC2?
+PC2 explica un 19,3% de la varianza.
+
+c) ¿Cuántos componentes se necesitan para explicar al menos 80 % de la varianza?
+Basta con los primeros dos componentes para explicar el 88,1% de la varianza.
+
+d) Interprete las cargas de PC1 y PC2.
+PC1 representa el tamaño general del pingüino y PC2 representa el tamaño del pico del pingüino.
+
+e) ¿Qué variables contribuyen más a cada componente?
+En PC1 contribuyen más las variables flipper_length_mm, body_mass_g y bill_length_mm, las cualidades que mas influyen sobre el tamaño.
+En PC2 contribuyen más las variables que tienen que ver con el pico: bill_length_mm y bill_depth_mm.
+
+```{r Inciso 2.3 Scree plot}
+fviz_eig(
+  pca_penguins,
+  addlabels = TRUE,
+  ylim = c(0, 100)
+) +
+  labs(title = "Scree plot del PCA")
+```
+```{r Inciso 2.3 PC1 vs PC2 por especie}
+scores_penguins <- as.data.frame(pca_penguins$x) %>%
+  as_tibble()
+
+penguins_metadata <- penguins %>%
+  drop_na(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) %>% 
+  transmute(
+    species = species,
+    island = island,
+    bill_length_mm = bill_length_mm,
+    bill_depth_mm = bill_depth_mm,
+    flipper_length_mm = flipper_length_mm,
+    body_mass_g = body_mass_g
+  )
+
+penguins_scores_metadata <- bind_cols(scores_penguins, penguins_metadata)
+
+penguins_scores_metadata %>%
+  dplyr::select(PC1:PC4, bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) %>%
+  cor(use = "pairwise.complete.obs")
+  round(2)
+
+penguins_scores_metadata%>%
+  ggplot(aes(x = PC1, y = PC2, color = species)) +
+  geom_point(alpha = 0.6, size = 1.6) +
+  labs(
+    title = "PCA de Pingüinos por Especie",
+    x = paste0("PC1 (", round(pca_var_exp[1] * 100, 1), "% varianza)"),
+    y = paste0("PC2 (", round(pca_var_exp[2] * 100, 1), "% varianza)"),
+    color = "Especies"
+  )
+```
+
+```{r Inciso 2.3 Biplot}
+fviz_pca_biplot(
+  pca_penguins,
+  repel = TRUE,
+  col.var = "black",
+  col.ind = "gray60",
+  label = "var",
+  #habillage = NULL
+) +
+  labs(title = "Biplot PCA de Pingüinos")
+```
+
+### 2.4. Interpretación biológica y estadística del PCA
+
+a) ¿PC1 parece representar el tamaño corporal en general? Justifique usando las cargas.
+Si, las cargas que mas contribuyen son aquellas que tienen más tienen que ver con el tamaño del pingüino. La que menos contribuye es la profundidad del pico, la cual influye minimamente en el tamaño corporal.
+
+b) ¿PC2 parece separar la forma del pico u otra característica morfológica?
+No, las variables que tienen que ver con el pico contribuyen de gran manera al componente, dejando de lado el resto de variables las cuales contribuyen poco.
+
+c) ¿Las especies se separan claramente en el espacio del PCA?
+Si, aunque principalmente se separa más la especie Gentoo de las otras dos.
+
+d) ¿Qué especies se solapan más?
+Las especies Adelie y Chinstrap se solapan entre ellas.
+
+e) ¿Qué ventajas ofrece PCA para visualizar este dataset?
+Reduce la dimensionalidad, comprimiendo las 4 variables que nos interesan para poder visualizar el dataset en dos dimensiones. Ademas, revela una clara separación entre especies.
+
+
+### 2.5. Clustering con k-means
+
+```{r Inciso 2.5}
+set.seed(123)
+
+km2 <- kmeans(
+  x = iris_scaled,
+  centers = 2,
+  nstart = 25
+)
+km3 <- kmeans(
+  x = iris_scaled,
+  centers = 3,
+  nstart = 25
+)
+km4 <- kmeans(
+  x = iris_scaled,
+  centers = 4,
+  nstart = 25
+)
+km5 <- kmeans(
+  x = iris_scaled,
+  centers = 5,
+  nstart = 25
+)
+
+km2
+km3
+km4
+km5
+
+```
+
+a) Use el método del codo y silhouette para elegir un número razonable de clusters.
+
+```{r Inciso 2.5 a)}
+set.seed(123)
+#Método del codo
+wss <- map_dbl(1:10, function(k) {
+  kmeans(penguins_escalado, centers = k, nstart = 25)$tot.withinss
+})
+
+elbow_tbl <- tibble(
+  k = 1:10,
+  total_within_ss = wss
+)
+
+ggplot(elbow_tbl, aes(x = k, y = total_within_ss)) +
+  geom_line() +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = 1:10) +
+  theme_minimal() +
+  labs(
+    title = "Método del codo",
+    x = "Número de clusters k",
+    y = "Suma total de cuadrados intra-cluster"
+  )
+
+#Método silhouette
+sil_width <- map_dbl(2:10, function(k) {
+  km <- kmeans(penguins_escalado, centers = k, nstart = 25)
+  ss <- silhouette(km$cluster, dist(penguins_escalado))
+  mean(ss[, 3])
+})
+
+sil_tbl <- tibble(
+  k = 2:10,
+  avg_silhouette_width = sil_width
+)
+
+ggplot(sil_tbl, aes(x = k, y = avg_silhouette_width)) +
+  geom_line() +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = 2:10) +
+  theme_minimal() +
+  labs(
+    title = "Ancho promedio de silhouette",
+    x = "Número de clusters k",
+    y = "Ancho promedio de silhouette"
+  )
+```
+
+Como el primer gráfico empieza a aplanarse en k=3 y además, es de los valores mas cercanos a 1 en el segundo gráfico, elegimos k=3.
+
+
+b) Ajuste el modelo final de k-means.
+
+```{r Inciso 2.5 b)}
+set.seed(123)
+
+km_final <- kmeans(
+  x = penguins_escalado,
+  centers = 3,
+  nstart = 50
+)
+
+penguins_km <- penguins %>%
+  drop_na(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) %>%
+  mutate(cluster_kmeans = factor(km_final$cluster))
+
+penguins_km %>%
+  count(cluster_kmeans)
+```
+
+c) Visualice los clústeres en el espacio PC1-PC2.
+
+```{r Inciso 2.5 c)}
+pca_for_clustering <- penguins_scores_metadata %>%
+  dplyr::select(PC1, PC2)
+
+set.seed(123)
+
+km_pca_final <- kmeans(
+  x = pca_for_clustering,
+  centers = 3,
+  nstart = 50
+)
+
+penguins_pca_clustered <- penguins %>%
+  drop_na(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) %>%
+  mutate(cluster_pca = factor(km_pca_final$cluster))
+
+pca_cluster_plot_data <- penguins_scores_metadata %>%
+  mutate(cluster_pca = penguins_pca_clustered$cluster_pca)
+
+ggplot(pca_cluster_plot_data, aes(x = PC1, y = PC2, color = cluster_pca)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(
+    title = "Clusters construidos sobre componentes principales",
+    x = "PC1",
+    y = "PC2",
+    color = "Cluster"
+  )
+```
+d) Compare los clústeres obtenidos con la variable real species.
+
+```{r Inciso 2.5 d)}
+  ggplot(pca_cluster_plot_data, aes(x = PC1, y = PC2, color = species)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  theme_minimal() +
+  labs(
+    title = "Clusters construidos sobre componentes principales",
+    x = "PC1",
+    y = "PC2",
+    color = "Especie"
+  )
+```
+e) Construya una tabla cruzada entre clúster y especie
+```{r Inciso 2.5 e)}
+table(
+  Cluster = penguins_pca_clustered$cluster_pca,
+  Species = penguins_pca_clustered$species
+)
+```
+f) Discuta si los clústeres recuperan las especies biológicas.
+Basandonos en la tabla y en los gráficos, podemos concluir que los clústeres recuperan en su totalidad la especie Gentoo. Por otro lado, no recupera en su totalidad a las otras especies, esto debido al solapamiento que existe entre ellas.
+
+
+#### 2.6. Clustering jerárquico
+
+```{r Inciso 2.6 a)}
+dist_penguins <- dist(penguins_escalado, method = "euclidean")
+
+hc_ward <- hclust(dist_penguins, method = "ward.D2")
+
+plot(
+  hc_ward,
+  labels = FALSE,
+  hang = -1,
+  main = "Dendrograma de clustering jerárquico",
+  xlab = "",
+  sub = ""
+)
+rect.hclust(hc_ward, k = 3, border = 2:4)
+```
+
+```{r Inciso 2.6 b)}
+penguins_hc <- penguins %>%
+  mutate(cluster_hc = factor(cutree(hc_ward, k = 3)))
+
+penguins_hc %>%
+  count(cluster_hc)
+
+table(
+  Cluster = penguins_hc$cluster_hc,
+  Species = penguins_hc$species
+)
+```
+
+
+
+
+
+#Problema 3
