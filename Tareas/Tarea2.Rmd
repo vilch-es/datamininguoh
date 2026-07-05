@@ -56,8 +56,10 @@ library(ggrepel)
 # Problema 1
 
 ### 1.1 Exploración y limpieza
+
 a)  Cargue el dataset y describa sus dimensiones, tipos de variables y porcentaje de valores perdidos por columna.
-```{r Inciso 1.1 a)}
+
+```{r Inciso 1.1.a)}
 # Para conocer dimensiones y tipos de variables:
 glimpse(titanic_train)
 
@@ -67,11 +69,12 @@ titanic_train %>%
   pivot_longer(cols = everything(), names_to = "Variable", values_to = "Porcentaje_Faltantes") %>%
   arrange(desc(Porcentaje_Faltantes))
 ```
+
 > El dataset consta de 12 columnas con 891 filas, dónde el comando `glimpse()` nos permite ver que `PassengerId, Survived, Pclass, SibSp, Parch, Fare` son variables numéricas, `Name, Sex, Ticket, Cabin, Embarked` son variables de texto. La única columna que presenta pérdida de datos es `Age`, con casi un 20% de sus datos perdidos. Por otro lado, en `Embarked, Cabin` existen datos vacíos que no necesariamente son perdidos, pero indican falta de información, dónde `Embarked` tiene un 0.22% de datos vacíos, y `Cabin` un 77.1% de datos vacíos.
 
-b)Limpie los datos considerando al menos las variables:
-`Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked`
-```{r Inciso 1.1 b}
+b)Limpie los datos considerando al menos las variables: `Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked`
+
+```{r Inciso 1.1.b}
 # Limpiar el dataset:
 titanic_clean <- titanic_train %>%
   dplyr::select(Survived, Pclass, Sex, Age, SibSp, Parch, Fare, Embarked) %>%
@@ -81,7 +84,25 @@ titanic_clean <- titanic_train %>%
 
 summary(titanic_clean)
 ```
-c) Justifique cómo manejará los valores perdidos, especialmente en `Age` y `Embarked`.
-> Como pudimos observar en el inciso a. la variable `Age` tiene casi un 20% de datos perdidos (`NA`). Simplemente eliminar esas filas sería una pérdida considerable de información, por lo que se decide rellenar esos valores con la mediana de los valores disponibles. Se prefiere la mediana sobre el promedio porque no se deja afectar por outliers.
 
-> Y como la variable `Embarked` solo tiene un 0.22% de sus valores vacíos, por lo que se decide convertir esos valores `""` a `NA` y luego eliminarlos, ya que estos solo solo representan 2 filas de un total de 891.
+Se decidió
+
+c)  Justifique cómo manejará los valores perdidos, especialmente en `Age` y `Embarked`.
+
+Como pudimos observar en el inciso a. la variable `Age` tiene casi un 20% de datos perdidos (`NA`). Simplemente eliminar esas filas sería una pérdida considerable de información, por lo que se decide rellenar esos valores con la mediana de los valores disponibles. Se prefiere la mediana sobre el promedio porque no se deja afectar por outliers.
+
+Y como la variable `Embarked` solo tiene un 0.22% de sus valores vacíos, por lo que se decide convertir esos valores `""` a `NA` y luego eliminarlos, ya que estos solo solo representan 2 filas de un total de 891.
+
+d)  Transforme las variables categóricas en factores cuando corresponda. \> De la exploración inicial del inciso a. notamos que las variables `Survived, Pclass, Sex, Embarked` son variables categóricas, y por lo tanto cada una debe ser transformada a factor.
+
+```{r Inciso 1.1.d}
+titanic_clean <- titanic_clean %>%
+  mutate(across(c(Survived, Pclass, Sex, Embarked), as.factor))
+
+# glimpse para verificar
+glimpse(titanic_clean)
+```
+
+### Inciso 1.2: Visualización Exploratoria con ggplot
+
+a.  
