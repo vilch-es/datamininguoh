@@ -114,8 +114,8 @@ Con esto, las variables pasan a factores y se reconocen como:
 
 Crear visualizaciones con ggplot2 incluyendo:
 
-a.  Supervivencia según sexo
-Para visualizar mejor la comparación entre estas dos variables categóricas usaremos gráficos de barras, y como en este caso deseamos visualizar una proporción, usamos `position=fill` para estandarizar los grupos.
+a.  Supervivencia según sexo Para visualizar mejor la comparación entre estas dos variables categóricas usaremos gráficos de barras, y como en este caso deseamos visualizar una proporción, usamos `position=fill` para estandarizar los grupos.
+
 ```{r Inciso 1.2.a}
 plot_a <- ggplot(titanic_clean, aes(x = Sex, fill = Survived)) +
   geom_bar(position = "fill", alpha = 0.8) +
@@ -128,8 +128,8 @@ plot_a
 
 Se observa una gran diferencia entre la proporción de mujeres que sobrevivieron a la de hombres que sobrevivieron.
 
-b.  Supervivencia según clase
-Al igual que el inciso anterior, buscamos estandarizar grupos al comparar variables categóricas, una vez más usamos gráficos de barras con `fill`.
+b.  Supervivencia según clase Al igual que el inciso anterior, buscamos estandarizar grupos al comparar variables categóricas, una vez más usamos gráficos de barras con `fill`.
+
 ```{r Inciso 1.2.b}
 plot_b <- ggplot(titanic_clean, aes(x = Pclass, fill = Survived)) +
   geom_bar(position = "fill", alpha = 0.8) +
@@ -142,8 +142,8 @@ plot_b
 
 Existe una relación directa entre el estatus socioeconómico y la supervivencia. Los pasajeros de 1ra clase (`Pclass = 1`) tienen la mayor tasa de supervivencia, seguidos por la 2da clase, mientras que la inmensa mayoría de los pasajeros de 3ra clase no sobrevivió. Esto indica de forma tentativa que `Pclass` será una variable útil a la hora de predecir.
 
-c.  Distribución de edad según supervivencia
-Buscamos comparar una variable numérica contra una categórica, y como se pide una distribución, necesitamos un gráfico que permita mostrar de forma continua como se distribuyen los datos. Para ello, un gráfico de densidad permite mostrar claramente la distribución de edad. 
+c.  Distribución de edad según supervivencia Buscamos comparar una variable numérica contra una categórica, y como se pide una distribución, necesitamos un gráfico que permita mostrar de forma continua como se distribuyen los datos. Para ello, un gráfico de densidad permite mostrar claramente la distribución de edad.
+
 ```{r Inciso 1.2.c}
 plot_c <- ggplot(titanic_clean, aes(x = Age, fill = Survived)) +
   geom_density(alpha = 0.8) +
@@ -156,8 +156,8 @@ plot_c
 
 Aunque las curvas de densidad son similares en el centro (adultos), hay un pico muy marcado en la curva azul (sobrevivientes) a la izquierda del gráfico, correspondiente a las edades entre 0 y 10 años. Esto indica que ser un niño pequeño aumentaba considerablemente las probabilidades de sobrevivir.
 
-d.  Relación entre tarifa pagada, `Fare` y supervivencia  
-Una vez más comparamos variable categórica vs numérica, pero en esta ocasión nos enfrentamos a datos muy dispersos, dónde la variable `Fare` presenta outliers extremos como una tarifa de 512 (como puede ser vista en el inciso 1.1.b). Por lo tanto, nuestra mejor opción para visualizar es un boxplot, donde además es necesario hacer un ajuste a la escala del eje Y, ya que como fue mencionado, hay pasajeros que pagaron grandes tarifas, con el propósito de permitir una mejor lectura de los datos.
+d.  Relación entre tarifa pagada, `Fare` y supervivencia\
+    Una vez más comparamos variable categórica vs numérica, pero en esta ocasión nos enfrentamos a datos muy dispersos, dónde la variable `Fare` presenta outliers extremos como una tarifa de 512 (como puede ser vista en el inciso 1.1.b). Por lo tanto, nuestra mejor opción para visualizar es un boxplot, donde además es necesario hacer un ajuste a la escala del eje Y, ya que como fue mencionado, hay pasajeros que pagaron grandes tarifas, con el propósito de permitir una mejor lectura de los datos.
 
 ```{r Inciso 1.2.d}
 plot_d <- ggplot(titanic_clean, aes(x = Survived, y = Fare, fill = Survived)) +
@@ -175,20 +175,196 @@ plot_d
 La caja azul (sobrevivientes) está notablemente más arriba que la caja roja en el eje Y (Tarifa). Quienes sobrevivieron pagaron, en mediana, tarifas mucho más altas. Es altamente probable que esta variable esté fuertemente correlacionada con `Pclass`, pero confirma que el poder adquisitivo influyó en el rescate.
 
 ### Inciso 1.3: Modelo Logístico Base
-Ajustar un modelo de predicción logística con los predictores:
-`Pclass, Sex, Age, SibSp, Parch, Fare, Embarked`
-Responder:
-a) ¿Qué variables son estadísticamente significativas?
-b) Interprete al menos cuatro coeficientes usando odds ratios.
-c) ¿Qué significa un odds ratio mayor que 1? ¿Y menor que 1?
-d) ¿Qué limitaciones tiene interpretar significancia estadística sin evaluar desempeño predictivo?
+
+Ajustar un modelo de predicción logística con los predictores: `Pclass, Sex, Age, SibSp, Parch, Fare, Embarked`
+
 ```{r modelo logístico base}
 modelo_base <- glm(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked, data = titanic_clean, family = "binomial")
 
 summary(modelo_base)
 
 # Calculamos los Odds Ratios
-# round() es solo para que los números no salgan con tantos decimales
 round(exp(coef(modelo_base)), 3)
 ```
-a. 
+
+Responder: 
+
+a) ¿Qué variables son estadísticamente significativas?
+
+  Al mirar los p-valores, las variables más significativas son `Pclass, Sex (Sexmale), Age, SibSp` y las menos significativas son `Embarked, Fare, Parch`. b) Interprete al menos cuatro coeficientes usando odds ratios.
+
+Si miramos los oddratios de las variables más significativas podemos interpretar que:
+
+- La variable `Sex` tiene un OddRatio de 0.066, lo que indica que ser hombre disminuye las chances de sobrevivir en un 94.4% en comparación con ser mujer.
+
+- La variable `Pclass` tiene un OddRatio de 0.333, lo que indica que en comparación con los pasajeros de 1ra clase (la categoría de referencia), estar en 2da clase reduce las chances de sobrevivir en un 66.7%.
+
+- La variable `Age` tiene un ODDRatio de 0.961, lo que indica que por cada año adicional que tiene un pasajero, sus chances de sobrevivir disminuyen en un 4% aproximadamente.
+
+- La variable `SibSp` tiene un OddRatio de 0.723, lo que indica que por cada familiar adicional, las chances de sobrevivir disminuyen un 28.7%.
+
+c)  ¿Qué significa un odds ratio mayor que 1? ¿Y menor que 1?
+
+- Un $OR>1$ indica una asociación positiva, quiere decir que a medida que aumenta la variable predictora. aumentan las chances de que ocurra el evento, en este caso, sobrevivir.
+
+- Un $OR<1$ indica una asociación negativa, es decir, a medida que aumenta la variable predictora, disminuyen las chances de que ocurra el evento.
+d)  ¿Qué limitaciones tiene interpretar significancia estadística sin evaluar desempeño predictivo?
+
+d.
+
+### Inciso 1.4: Selección automáica por AIC
+
+Aplicaremos AIC al modelo visto en el inciso previo:
+
+```{r Selección por AIC}
+modelo_aic <- MASS::stepAIC(modelo_base, direction = "both", trace = FALSE)
+
+summary(modelo_aic)
+
+cat("AIC Modelo Completo: ", AIC(modelo_base), "\n")
+cat("AIC Modelo Seleccionado: ", AIC(modelo_aic), "\n")
+```
+
+Responder: 
+
+a) ¿Qué variables fueron seleccionadas? 
+
+Fueron seleccionadas una vez más las variables `Pclasss, Sex, Age, SibSp`.
+
+b) ¿El modelo seleccionado por AIC es más simple que el modelo completo? 
+
+Sí, ya que al descartar variables predictoras utilizando `direction=both`, el modelo tiene menos dimensiones y parámetros que estimar.
+
+c) Compare el AIC del modelo completo y del modelo seleccionado. 
+
+Al comparar los AIC notamos que el valor del modelo seleccionado es menor que el del modelo completo. El algoritmo de selección itera buscando minimizar este indicador.
+
+d) Discuta si un menor AIC implica necesariamente mejor capacidad predictiva.
+
+Un menor AIC no necesariamente indica una mejor capacidad predictiva, si bien el AIC nos ayuda a evitar overfitting al castigar modelos que usen variables inútiles, el AIC no pone a prueba el modelo con datos nuevos, por lo que no puede garantizar la capacidad de predecir correctamente el mundo real. Para confirmar la capacidad de predecir, siempre es necesario usar un conjunto de datos de prueba.
+### Inciso 1.5: Ridge y LASSO
+Usando `glmnet`, ajustar modelos de regularización.
+> Como estos modelos no trabajan directamente con el dataframe, es necesario convertir el modelo a trabajar a una matriz. Se usa la función `model.matrix()` para hacer esto, teniendo especial cuidado de eliminar la primera columna de intercepto que genera para no tener interceptos duplicados junto al que `glmnet` genera. Por lo tanto previo a ajustar los modelos, se hace este paso 0.
+
+```{r Preparar los datos para glmnet}
+x <- model.matrix(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked, data = titanic_clean)[, -1]
+
+y <- as.numeric(as.character(titanic_clean$Survived))
+
+set.seed(123)
+```
+
+a) Ridge regression.
+```{r Modelo Ridge}
+modelo_ridge <- cv.glmnet(x, y, family = "binomial", alpha = 0)
+
+modelo_ridge
+```
+
+b) Lasso regression.
+```{r Modelo LASSO}
+modelo_lasso <- cv.glmnet(x, y, family = "binomial", alpha = 1)
+
+modelo_lasso
+```
+
+c) Seleccione lambda usando validación cruzada.
+```{r Lambdas}
+cat(" LAMBDAS RIDGE\n")
+cat("Min: ", modelo_ridge$lambda.min, " | 1se: ", modelo_ridge$lambda.1se, "\n\n")
+
+cat("LAMBDAS LASSO\n")
+cat("Min: ", modelo_lasso$lambda.min, " | 1se: ", modelo_lasso$lambda.1se, "\n\n")
+```
+
+La función `cv.glmnet` ya hace validación cruzada, por lo tanto se decide seleccionar el valor de `lambda.1se` para ambos modelos, ya que es el valor de penalización más estricto que se mantiene dentro de un rango aceptable de error.
+
+d) Compare los valores de lambda.min y lambda.1se.
+
+- Para el modelo Ridge: el valor de `lambda.min` es 0.026, el cual es el punto donde el error de la validación cruzada es el menor. Por otro lado, el `lambda.1se` es de 0.073, un valor mayor que impone una mayor penalización a los coeficientes para evitar overfitting.
+
+- Para el modelo Lasso: el `lambda.min` obtenido fue de 0.002 y el `lambda.1se` fue 0.013. Al comparar estos valores en Lasso, entendemos que al usar `lambda.1se` el modelo fuerza a que más variables se reduzcan a 0, eliminándolas del modelo.
+
+e) Identifique qué variables conserva lasso en el modelo final.
+```{r Variables que conserva Lasso}
+cat("Coeficientes LASSO\n")
+coef(modelo_lasso, s = "lambda.1se")
+```
+Para identificar claramente que variables conservó LASSO podemos mirar sus coeficientes con `lambda.1se`, y al hacerlo notamos que las únicas variables que eliminó fueron `Parch, EmbarkedQ`, dando a entender que conservó las restantes, es decir, `Pclass, Sex, Age, SibSp,Fare`. Notamos además que eliminó `EmbarkedQ` pero mantuvo `EmbarkedS` porque evalua las variables categóricas de forma independiente, por lo tanto podemos decir que mantuvo parcialmente la variable `Embarked`.
+
+### Inciso 1.6: Evaluación Predictiva
+Divida los datos en entrenamiento y prueba, por ejemplo 70/30.
+Compare los siguientes modelos:
+
+1. Regresión logística completa.
+2. Regresión logística seleccionada por AIC.
+3. Ridge.
+4. Lasso.
+
+Use al menos las siguientes métricas:
+- Accuracy.
+- Sensibilidad.
+- Especificidad.
+- AUC ROC.
+- Matriz de confusión.
+
+```{r Evaluación Predictiva}
+set.seed(123)
+
+# Division de datos 70/30
+split_titanic <- initial_split(titanic_clean, prop = 0.7, strata = Survived) # strata para asegurar una proporción de sobrevivientes balanceada
+train_data <- training(split_titanic)
+test_data <- testing(split_titanic)
+
+# Entrenamiento de modelos con train_data
+m1_completo <- glm(Survived ~., data=train_data,family="binomial")
+m2_aic <- MASS::stepAIC(m1_completo, direction = "both", trace = FALSE)
+
+# Preparación para Ridge y Lasso
+x_train <- model.matrix(Survived ~ ., data = train_data)[, -1]
+y_train <- as.numeric(as.character(train_data$Survived))
+x_test <- model.matrix(Survived ~ ., data = test_data)[, -1]
+y_test <- as.numeric(as.character(test_data$Survived))
+
+# Ridge y LASSO
+m3_ridge <- glmnet::cv.glmnet(x_train, y_train, family = "binomial", alpha = 0)
+m4_lasso <- glmnet::cv.glmnet(x_train, y_train, family = "binomial", alpha = 1)
+
+# Predicciones de probabilidades como valores entre 0 y1
+prob_m1 <- predict(m1_completo, newdata = test_data, type = "response")
+prob_m2 <- predict(m2_aic, newdata = test_data, type = "response")
+prob_m3 <- predict(m3_ridge, newx = x_test, s = "lambda.1se", type = "response")[,1]
+prob_m4 <- predict(m4_lasso, newx = x_test, s = "lambda.1se", type = "response")[,1]
+
+# Convertimos probabilidades a factores (1 si > 0.5, 0 si no)
+eval_data <- tibble(
+  real = as.factor(test_data$Survived),
+  pred_m1 = factor(ifelse(prob_m1 > 0.5, 1, 0), levels = c("0", "1")),
+  pred_m2 = factor(ifelse(prob_m2 > 0.5, 1, 0), levels = c("0", "1")),
+  pred_m3 = factor(ifelse(prob_m3 > 0.5, 1, 0), levels = c("0", "1")),
+  pred_m4 = factor(ifelse(prob_m4 > 0.5, 1, 0), levels = c("0", "1"))
+)
+
+# Cálculo de métricas
+# Matriz de Confusión usando el Modelo AIC
+print(conf_mat(eval_data, truth = real, estimate = pred_m2))
+
+# AUC ROC usando pROC
+cat("\nAUC ROC\n")
+cat("Completo:", auc(roc(eval_data$real, prob_m1, quiet=TRUE)), "\n")
+cat("AIC:     ", auc(roc(eval_data$real, prob_m2, quiet=TRUE)), "\n")
+cat("Ridge:   ", auc(roc(eval_data$real, prob_m3, quiet=TRUE)), "\n")
+cat("Lasso:   ", auc(roc(eval_data$real, prob_m4, quiet=TRUE)), "\n")
+
+# Para Accuracy, Sensibilidad y Especificidad
+metricas <- metric_set(accuracy, sensitivity, specificity)
+cat("\nMÉTRICAS MODELO AIC\n")
+print(metricas(eval_data, truth = real, estimate = pred_m2, event_level = "second"))
+# event_level = "second" indica que la categoría de interés (Sobrevivió) es el "1"
+```
+
+Responder:
+a) ¿Cuál modelo tiene mejor desempeño predictivo?
+b) ¿Cuál modelo es más interpretable?
+c) ¿Existe una diferencia importante entre el modelo más interpretable y el más predictivo?
+d) ¿Qué modelo recomendaría y por qué?
