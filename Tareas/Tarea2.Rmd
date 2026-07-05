@@ -103,6 +103,72 @@ titanic_clean <- titanic_clean %>%
 glimpse(titanic_clean)
 ```
 
+Con esto, las variables pasan a factores y se reconocen como:
+
+- `Survived`: 0 no sobrevivió; 1 si lo hizo
+- `Pclass`: 1 para primera clase; 2 para segunda; 3 para tercera
+- `Sex`: 0 para hombre; 1 para mujer
+- `Embarked`: 0 para puerto C; 1 para puerto Q; 2 para puerto S
+
 ### Inciso 1.2: Visualización Exploratoria con ggplot
 
-a.  
+Crear visualizaciones con ggplot2 incluyendo:
+
+a.  Supervivencia según sexo
+
+```{r Inciso 1.2.a}
+plot_a <- ggplot(titanic_clean, aes(x = Sex, fill = Survived)) +
+  geom_bar(position = "fill", alpha = 0.8) +
+  scale_fill_manual(values = c("0" = "salmon", "1" = "steelblue"), labels = c("No", "Sí")) +
+  labs(title = "Supervivencia por Sexo", y = "Proporción", x = "Sexo", fill = "¿Sobrevivió?") +
+  theme_minimal()
+
+plot_a
+```
+
+Se observa una gran diferencia entre la proporción de mujeres que sobrevivieron a la de hombres que sobrevivieron.
+
+b.  Supervivencia según clase
+
+```{r Inciso 1.2.b}
+plot_b <- ggplot(titanic_clean, aes(x = Pclass, fill = Survived)) +
+  geom_bar(position = "fill", alpha = 0.8) +
+  scale_fill_manual(values = c("0" = "salmon", "1" = "steelblue"), labels = c("No", "Sí")) +
+  labs(title = "Supervivencia por Clase", y = "Proporción", x = "Clase del Ticket", fill = "¿Sobrevivió?") +
+  theme_minimal()
+
+plot_b
+```
+
+Existe una relación directa entre el estatus socioeconómico y la supervivencia. Los pasajeros de 1ra clase (`Pclass = 1`) tienen la mayor tasa de supervivencia, seguidos por la 2da clase, mientras que la inmensa mayoría de los pasajeros de 3ra clase no sobrevivió. Esto indica de forma tentativa que `Pclass` será una variable útil a la hora de predecir.
+
+c.  Distribución de edad según supervivencia
+
+```{r Inciso 1.2.c}
+plot_c <- ggplot(titanic_clean, aes(x = Age, fill = Survived)) +
+  geom_density(alpha = 0.8) +
+  scale_fill_manual(values = c("0" = "salmon", "1" = "steelblue"), labels = c("No", "Sí")) +
+  labs(title = "Distribución de Edad", y = "Densidad", x = "Edad", fill = "¿Sobrevivió?") +
+  theme_minimal()
+
+plot_c
+```
+
+Aunque las curvas de densidad son similares en el centro (adultos), hay un pico muy marcado en la curva azul (sobrevivientes) a la izquierda del gráfico, correspondiente a las edades entre 0 y 10 años. Esto indica que ser un niño pequeño aumentaba considerablemente las probabilidades de sobrevivir.
+
+d.  Relación entre tarifa pagada, `Fare` y supervivencia Para este inciso se decide es necesario hacer un ajuste a la escala del eje Y, ya que hay pasajeros que pagaron grandes tarifas, los cuales dejarían un gráfico con outliers extremos.
+
+```{r Inciso 1.2.d}
+plot_d <- ggplot(titanic_clean, aes(x = Survived, y = Fare, fill = Survived)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_y_log10() +
+  scale_fill_manual(values = c("0" = "salmon", "1" = "steelblue")) +
+  scale_x_discrete(labels = c("0" = "No", "1" = "Sí")) +
+  labs(title = "Tarifa pagada vs Supervivencia", y = "Tarifa (Escala Log)", x = "¿Sobrevivió?") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+plot_d
+```
+
+La caja azul (sobrevivientes) está notablemente más arriba que la caja roja en el eje Y (Tarifa). Quienes sobrevivieron pagaron, en mediana, tarifas mucho más altas. Es altamente probable que esta variable esté fuertemente correlacionada con `Pclass`, pero confirma que el poder adquisitivo influyó en el rescate.
