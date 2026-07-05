@@ -55,7 +55,7 @@ library(ggrepel)
 
 # Problema 1
 
-### 1.1 Exploración y limpieza
+### Inciso 1.1: Exploración y limpieza
 
 a)  Cargue el dataset y describa sus dimensiones, tipos de variables y porcentaje de valores perdidos por columna.
 
@@ -187,11 +187,11 @@ summary(modelo_base)
 round(exp(coef(modelo_base)), 3)
 ```
 
-Responder: 
+Responder:
 
-a) ¿Qué variables son estadísticamente significativas?
+a)  ¿Qué variables son estadísticamente significativas?
 
-  Al mirar los p-valores, las variables más significativas son `Pclass, Sex (Sexmale), Age, SibSp` y las menos significativas son `Embarked, Fare, Parch`. b) Interprete al menos cuatro coeficientes usando odds ratios.
+Al mirar los p-valores, las variables más significativas son `Pclass, Sex (Sexmale), Age, SibSp` y las menos significativas son `Embarked, Fare, Parch`. b) Interprete al menos cuatro coeficientes usando odds ratios.
 
 Si miramos los oddratios de las variables más significativas podemos interpretar que:
 
@@ -208,9 +208,12 @@ c)  ¿Qué significa un odds ratio mayor que 1? ¿Y menor que 1?
 - Un $OR>1$ indica una asociación positiva, quiere decir que a medida que aumenta la variable predictora. aumentan las chances de que ocurra el evento, en este caso, sobrevivir.
 
 - Un $OR<1$ indica una asociación negativa, es decir, a medida que aumenta la variable predictora, disminuyen las chances de que ocurra el evento.
+
 d)  ¿Qué limitaciones tiene interpretar significancia estadística sin evaluar desempeño predictivo?
 
-d.
+<!-- -->
+
+d.  
 
 ### Inciso 1.4: Selección automáica por AIC
 
@@ -225,25 +228,28 @@ cat("AIC Modelo Completo: ", AIC(modelo_base), "\n")
 cat("AIC Modelo Seleccionado: ", AIC(modelo_aic), "\n")
 ```
 
-Responder: 
+Responder:
 
-a) ¿Qué variables fueron seleccionadas? 
+a)  ¿Qué variables fueron seleccionadas?
 
 Fueron seleccionadas una vez más las variables `Pclasss, Sex, Age, SibSp`.
 
-b) ¿El modelo seleccionado por AIC es más simple que el modelo completo? 
+b)  ¿El modelo seleccionado por AIC es más simple que el modelo completo?
 
 Sí, ya que al descartar variables predictoras utilizando `direction=both`, el modelo tiene menos dimensiones y parámetros que estimar.
 
-c) Compare el AIC del modelo completo y del modelo seleccionado. 
+c)  Compare el AIC del modelo completo y del modelo seleccionado.
 
 Al comparar los AIC notamos que el valor del modelo seleccionado es menor que el del modelo completo. El algoritmo de selección itera buscando minimizar este indicador.
 
-d) Discuta si un menor AIC implica necesariamente mejor capacidad predictiva.
+d)  Discuta si un menor AIC implica necesariamente mejor capacidad predictiva.
 
 Un menor AIC no necesariamente indica una mejor capacidad predictiva, si bien el AIC nos ayuda a evitar overfitting al castigar modelos que usen variables inútiles, el AIC no pone a prueba el modelo con datos nuevos, por lo que no puede garantizar la capacidad de predecir correctamente el mundo real. Para confirmar la capacidad de predecir, siempre es necesario usar un conjunto de datos de prueba.
+
 ### Inciso 1.5: Ridge y LASSO
+
 Usando `glmnet`, ajustar modelos de regularización.
+
 > Como estos modelos no trabajan directamente con el dataframe, es necesario convertir el modelo a trabajar a una matriz. Se usa la función `model.matrix()` para hacer esto, teniendo especial cuidado de eliminar la primera columna de intercepto que genera para no tener interceptos duplicados junto al que `glmnet` genera. Por lo tanto previo a ajustar los modelos, se hace este paso 0.
 
 ```{r Preparar los datos para glmnet}
@@ -254,21 +260,24 @@ y <- as.numeric(as.character(titanic_clean$Survived))
 set.seed(123)
 ```
 
-a) Ridge regression.
+a)  Ridge regression.
+
 ```{r Modelo Ridge}
 modelo_ridge <- cv.glmnet(x, y, family = "binomial", alpha = 0)
 
 modelo_ridge
 ```
 
-b) Lasso regression.
+b)  Lasso regression.
+
 ```{r Modelo LASSO}
 modelo_lasso <- cv.glmnet(x, y, family = "binomial", alpha = 1)
 
 modelo_lasso
 ```
 
-c) Seleccione lambda usando validación cruzada.
+c)  Seleccione lambda usando validación cruzada.
+
 ```{r Lambdas}
 cat(" LAMBDAS RIDGE\n")
 cat("Min: ", modelo_ridge$lambda.min, " | 1se: ", modelo_ridge$lambda.1se, "\n\n")
@@ -279,33 +288,36 @@ cat("Min: ", modelo_lasso$lambda.min, " | 1se: ", modelo_lasso$lambda.1se, "\n\n
 
 La función `cv.glmnet` ya hace validación cruzada, por lo tanto se decide seleccionar el valor de `lambda.1se` para ambos modelos, ya que es el valor de penalización más estricto que se mantiene dentro de un rango aceptable de error.
 
-d) Compare los valores de lambda.min y lambda.1se.
+d)  Compare los valores de lambda.min y lambda.1se.
 
 - Para el modelo Ridge: el valor de `lambda.min` es 0.026, el cual es el punto donde el error de la validación cruzada es el menor. Por otro lado, el `lambda.1se` es de 0.073, un valor mayor que impone una mayor penalización a los coeficientes para evitar overfitting.
 
 - Para el modelo Lasso: el `lambda.min` obtenido fue de 0.002 y el `lambda.1se` fue 0.013. Al comparar estos valores en Lasso, entendemos que al usar `lambda.1se` el modelo fuerza a que más variables se reduzcan a 0, eliminándolas del modelo.
 
-e) Identifique qué variables conserva lasso en el modelo final.
+e)  Identifique qué variables conserva lasso en el modelo final.
+
 ```{r Variables que conserva Lasso}
 cat("Coeficientes LASSO\n")
 coef(modelo_lasso, s = "lambda.1se")
 ```
+
 Para identificar claramente que variables conservó LASSO podemos mirar sus coeficientes con `lambda.1se`, y al hacerlo notamos que las únicas variables que eliminó fueron `Parch, EmbarkedQ`, dando a entender que conservó las restantes, es decir, `Pclass, Sex, Age, SibSp,Fare`. Notamos además que eliminó `EmbarkedQ` pero mantuvo `EmbarkedS` porque evalua las variables categóricas de forma independiente, por lo tanto podemos decir que mantuvo parcialmente la variable `Embarked`.
 
 ### Inciso 1.6: Evaluación Predictiva
-Divida los datos en entrenamiento y prueba, por ejemplo 70/30.
-Compare los siguientes modelos:
 
-1. Regresión logística completa.
-2. Regresión logística seleccionada por AIC.
-3. Ridge.
-4. Lasso.
+Divida los datos en entrenamiento y prueba, por ejemplo 70/30. Compare los siguientes modelos:
+
+1.  Regresión logística completa.
+2.  Regresión logística seleccionada por AIC.
+3.  Ridge.
+4.  Lasso.
 
 Use al menos las siguientes métricas:
-- Accuracy.
-- Sensibilidad.
-- Especificidad.
-- AUC ROC.
+
+- Accuracy.\
+- Sensibilidad.\
+- Especificidad.\
+- AUC ROC.\
 - Matriz de confusión.
 
 ```{r Evaluación Predictiva}
@@ -364,7 +376,11 @@ print(metricas(eval_data, truth = real, estimate = pred_m2, event_level = "secon
 ```
 
 Responder:
-a) ¿Cuál modelo tiene mejor desempeño predictivo?
-b) ¿Cuál modelo es más interpretable?
-c) ¿Existe una diferencia importante entre el modelo más interpretable y el más predictivo?
-d) ¿Qué modelo recomendaría y por qué?
+
+a)  ¿Cuál modelo tiene mejor desempeño predictivo?
+
+b)  ¿Cuál modelo es más interpretable?
+
+c)  ¿Existe una diferencia importante entre el modelo más interpretable y el más predictivo?
+
+d)  ¿Qué modelo recomendaría y por qué?
