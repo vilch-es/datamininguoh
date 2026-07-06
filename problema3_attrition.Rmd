@@ -1,0 +1,140 @@
+---
+title: "Tarea 2 - Problema 3: Predicción de rotación laboral"
+subtitle: "Minería de Datos"
+author: "COMPLETAR: nombres del grupo"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r paquetes}
+# cargamos los paquetes que vamos a usar en el problema
+library(tidyverse)
+library(modeldata)
+library(broom)
+```
+
+# Problema 3: Predicción de rotación laboral
+
+## 3.1 Preparación de datos
+
+### a) Carga del dataset
+
+```{r carga-datos}
+data(attrition, package = "modeldata")
+```
+
+### b) Dimensiones, tipos de variables y valores perdidos
+
+```{r exploracion-inicial}
+# dimensiones del dataset
+dim(attrition)
+
+# estructura y tipo de cada variable
+glimpse(attrition)
+
+# valores perdidos por columna
+colSums(is.na(attrition))
+```
+
+<!-- COMPLETAR: comentar aqui cuantas filas y columnas tiene el dataset,
+cuantas variables son numericas y cuantas categoricas, y confirmar que
+no hay valores perdidos (todos los conteos de NA dan 0). -->
+
+### c) Distribución de la variable respuesta
+
+```{r distribucion-respuesta}
+attrition %>%
+  count(Attrition) %>%
+  mutate(prop = round(n / sum(n), 3))
+```
+
+### d) Desbalance de clases
+
+<!-- COMPLETAR: aqui va la discusion del desbalance. Idea central:
+aprox 84% No vs 16% Yes. Consecuencia: un modelo que prediga siempre
+"No" tendria un accuracy alto (~84%) pero seria inutil, porque no
+detectaria a ningun trabajador que renuncia. Por eso mas adelante
+usaremos metricas como sensibilidad, balanced accuracy y AUC ademas
+del accuracy. -->
+
+### e) Partición entrenamiento / prueba (70/30)
+
+```{r particion}
+# fijamos la semilla para que la particion sea reproducible
+set.seed(2026)
+
+n <- nrow(attrition)
+idx_train <- sample(1:n, size = round(0.7 * n))
+
+attr_train <- attrition[idx_train, ]
+attr_test  <- attrition[-idx_train, ]
+
+# verificamos los tamaños
+nrow(attr_train)
+nrow(attr_test)
+
+# revisamos que la proporcion de Attrition se mantenga parecida en ambos
+prop.table(table(attr_train$Attrition))
+prop.table(table(attr_test$Attrition))
+```
+
+<!-- COMPLETAR: comentar que la particion es 70/30, que se uso set.seed
+para reproducibilidad, y que ambas particiones mantienen una proporcion
+de rotacion similar a la del dataset completo. Esta misma particion se
+usara para TODOS los modelos del problema. -->
+
+### f) Variables numéricas y categóricas
+
+```{r tipos-variables}
+vars_num <- attrition %>% select(where(is.numeric)) %>% names()
+vars_cat <- attrition %>% select(where(is.factor)) %>% names()
+
+vars_num
+vars_cat
+```
+
+### g) Estrategia de preprocesamiento
+
+<!-- COMPLETAR: redactar con sus palabras la estrategia. Puntos que
+debe cubrir (uno por parrafo corto o en una lista):
+
+1. Factores: las variables categoricas ya vienen como factores en este
+   dataset (se verifica con glimpse), por lo que no requieren conversion.
+
+2. Variables dummy: los modelos regularizados (ridge/lasso, seccion 3.5)
+   solo aceptan matrices numericas, por lo que las categoricas se
+   convertiran en variables 0/1 usando model.matrix().
+
+3. Estandarizacion: las variables numericas tienen escalas muy distintas
+   (ej: MonthlyIncome llega a miles, JobSatisfaction va de 1 a 4).
+   PCA, clustering y la regresion penalizada son sensibles a la escala,
+   asi que se estandarizara (media 0, desviacion 1). Nota importante:
+   los parametros de estandarizacion se calculan SOLO con entrenamiento
+   y luego se aplican a prueba, para evitar data leakage.
+
+4. Varianza cero o casi cero: variables que toman (casi) el mismo valor
+   para todos los trabajadores no aportan informacion para discriminar
+   y se eliminan.
+
+5. Valores perdidos: se verifico en b) que no existen, por lo que no se
+   requiere imputacion. -->
+
+```{r varianza-cero}
+# buscamos variables con varianza casi cero de forma manual:
+# contamos cuantos valores distintos tiene cada variable numerica
+attr_train %>%
+  summarise(across(where(is.numeric), ~ n_distinct(.))) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "n_valores") %>%
+  arrange(n_valores)
+```
+
+<!-- COMPLETAR: comentar si aparece alguna variable con un solo valor
+(varianza cero) y decidir si se elimina. -->
+
