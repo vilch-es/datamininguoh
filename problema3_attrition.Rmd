@@ -237,57 +237,33 @@ tidy(modelo_log, exponentiate = TRUE, conf.int = TRUE) %>%
 
 ### a) Variables asociadas a mayor probabilidad de rotación
 
-<!-- COMPLETAR: listar las variables con p-valor < 0.05 y OR > 1
-segun la tabla anterior (tipicamente OverTimeYes y algunos JobRole),
-y mencionar tambien los factores protectores (OR < 1 significativos,
-como JobSatisfaction o YearsAtCompany). -->
+Con un nivel de significancia del 5%, las variables asociadas a mayor probabilidad de rotación son OverTime (p < 0,001), DistanceFromHome (p = 0,031) y varios cargos: Sales Representative (p < 0,001), Laboratory Technician (p = 0,001), Sales Executive (p = 0,003) y Human Resources (p = 0,012). Como factores protectores significativos aparecen la edad (p = 0,007), la satisfacción laboral en su componente lineal (p < 0,001) y el work-life balance. YearsAtCompany queda justo al borde (p = 0,051). Nos llamó la atención que MonthlyIncome no salió significativo (p = 0,156) a pesar de lo que vimos en los gráficos; creemos que su efecto queda "absorbido" por variables correlacionadas como el cargo.
 
 ### b) Interpretación de al menos cinco coeficientes con odds ratios
 
-<!-- COMPLETAR con los valores exactos de la tabla de odds ratios.
-Estructura de cada interpretacion (reemplazar OR_X por el valor real):
+Antes de interpretar, un detalle: R descompone los factores ordinales (como JobSatisfaction) en componentes .L (tendencia lineal), .Q (cuadrática) y .C (cúbica). Para interpretar nos basta el componente lineal.
 
-1. OverTimeYes (OR = OR_X): un trabajador que hace horas extra tiene
-   OR_X veces las chances de renunciar que uno que no las hace,
-   manteniendo el resto de las variables constantes.
+1. **OverTimeYes (OR = 5,49; IC 95%: 3,68–8,28):** un trabajador que hace horas extra tiene casi 5,5 veces las chances de renunciar que uno que no las hace, manteniendo lo demás constante. Es lejos el factor de riesgo más fuerte del modelo.
 
-2. JobSatisfaction (OR = OR_X): por cada punto adicional de
-   satisfaccion laboral, las chances de renunciar se multiplican por
-   OR_X (es decir, se reducen en un (1 - OR_X)*100 %).
+2. **Age (OR = 0,96):** cada año adicional de edad reduce las chances de renunciar en aproximadamente un 4%, lo que confirma que la rotación se concentra en la gente joven.
 
-3. DistanceFromHome (OR = OR_X): cada kilometro adicional de distancia
-   al trabajo aumenta las chances de rotacion en un (OR_X - 1)*100 %.
+3. **JobSatisfaction.L (OR = 0,48):** hay una tendencia lineal significativa: a mayor satisfacción laboral, las chances de renunciar bajan de forma sostenida a lo largo de la escala.
 
-4. YearsAtCompany (OR = OR_X): cada año adicional en la empresa
-   modifica las chances de renunciar en un factor de OR_X.
+4. **DistanceFromHome (OR = 1,03):** cada kilómetro extra entre la casa y el trabajo aumenta las chances de rotación en cerca de un 2,6%. Por kilómetro parece poco, pero acumulado en distancias grandes se vuelve relevante.
 
-5. JobRole... (OR = OR_X): pertenecer a este cargo multiplica las
-   chances de rotacion en OR_X veces EN COMPARACION con la categoria
-   de referencia del factor JobRole.
-
-Nota: recordar mencionar que en variables categoricas el OR se
-interpreta respecto a la categoria de referencia. -->
+5. **JobRoleSales_Representative (OR = 13,29):** ser representante de ventas multiplica por más de 13 las chances de renunciar comparado con el cargo de referencia (Healthcare Representative). Eso sí, el intervalo de confianza es muy ancho (3,9–51,6), porque hay pocos trabajadores en ese cargo, así que el valor exacto hay que tomarlo con cautela.
 
 ### c) ¿Qué significa un odds ratio mayor que 1?
 
-<!-- COMPLETAR. Idea: un OR > 1 indica que la variable se asocia con un
-AUMENTO en las chances (odds) de rotacion. Ej: OR = 2 significa que las
-chances se duplican, manteniendo lo demas constante. -->
+Un odds ratio mayor que 1 significa que la variable se asocia con un aumento en las chances de renunciar, manteniendo el resto constante. Por ejemplo, OverTimeYes tiene OR = 5,49: hacer horas extra multiplica por 5,5 las chances de rotación.
 
 ### d) ¿Qué significa un odds ratio menor que 1?
 
-<!-- COMPLETAR. Idea: un OR < 1 indica un factor protector: la variable
-se asocia con una DISMINUCION de las chances de rotacion. Ej: OR = 0.7
-implica una reduccion del 30% en las chances. -->
+Un odds ratio menor que 1 indica un factor protector: la variable se asocia con una disminución de las chances de renunciar. Por ejemplo, Age tiene OR = 0,96, o sea que cada año adicional de edad reduce las chances en un 4% aproximadamente.
 
 ### e) Variables útiles para una intervención organizacional
 
-<!-- COMPLETAR. Idea central: la empresa solo puede intervenir sobre
-variables MODIFICABLES. Candidatas: horas extra (reducirlas o
-compensarlas), satisfaccion laboral y work-life balance (clima y
-politicas internas), sueldo en perfiles de riesgo, y teletrabajo o
-flexibilidad para quienes viven lejos. Variables como la edad no son
-intervenibles, aunque sirvan para focalizar. -->
+Para intervenir, lo que importa es qué variables puede modificar la empresa. La principal es OverTime: es el factor de riesgo más fuerte (OR = 5,49) y depende directamente de decisiones de la organización, como limitar o compensar las horas extra. También se puede trabajar la satisfacción laboral y el work-life balance con políticas internas, y la distancia al hogar sugiere evaluar teletrabajo o flexibilidad. En cambio, variables como la edad no se pueden intervenir, aunque sirven para saber en qué perfiles enfocar los esfuerzos de retención.
 
 ## 3.4 Selección automática por AIC
 
