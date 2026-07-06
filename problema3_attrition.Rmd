@@ -296,32 +296,23 @@ length(coef(modelo_aic))
 
 ### a) ¿Qué variables fueron seleccionadas?
 
-<!-- COMPLETAR: listar las variables de formula(modelo_aic). -->
+El modelo seleccionado por AIC se quedó con 20 variables: Age, BusinessTravel, DailyRate, DistanceFromHome, EnvironmentSatisfaction, Gender, JobInvolvement, JobRole, JobSatisfaction, MaritalStatus, NumCompaniesWorked, OverTime, RelationshipSatisfaction, TotalWorkingYears, TrainingTimesLastYear, WorkLifeBalance, YearsAtCompany, YearsInCurrentRole, YearsSinceLastPromotion e YearsWithCurrManager. Comparando los AIC: el modelo completo tiene 609,7 y el seleccionado 588,5, o sea que la selección mejoró el balance entre ajuste y complejidad en unos 21 puntos.
 
 ### b) ¿El modelo final es más simple que el inicial?
 
-<!-- COMPLETAR: comparar el numero de variables/coeficientes de ambos
-modelos. Lo esperable es que el modelo AIC tenga bastantes menos. -->
+Sí. El modelo completo estimaba 58 coeficientes con las 30 variables disponibles, y el seleccionado quedó con 40 coeficientes y 20 variables. En la práctica, la selección eliminó un tercio de los predictores.
 
 ### c) ¿Qué variables fueron eliminadas?
 
-<!-- COMPLETAR: listar las variables del modelo completo que NO
-aparecen en formula(modelo_aic). -->
+Se eliminaron 10 variables: Department, Education, EducationField, HourlyRate, JobLevel, MonthlyIncome, MonthlyRate, PercentSalaryHike, PerformanceRating y StockOptionLevel. Nos llamó la atención que se fueran todas las variables de plata (MonthlyIncome, MonthlyRate, HourlyRate): al parecer su información ya está contenida en variables que sí quedaron, como el cargo y los años de experiencia.
 
 ### d) ¿Coinciden con el análisis exploratorio?
 
-<!-- COMPLETAR: comparar con los graficos de 3.2. Lo esperable es que
-OverTime, JobSatisfaction y variables de ingreso/cargo sobrevivan,
-coincidiendo con los patrones observados. Si alguna variable que se
-veia importante en los graficos fue eliminada, comentarlo. -->
+En general sí: OverTime, JobSatisfaction, JobRole y las variables de antigüedad, que eran los patrones más claros de los gráficos, sobrevivieron a la selección. La excepción interesante es MonthlyIncome: en los gráficos se veía una relación evidente con la rotación, pero fue eliminada. No creemos que eso contradiga lo que vimos, sino que su información es redundante una vez que el cargo y la experiencia ya están en el modelo.
 
 ### e) ¿Un menor AIC garantiza mejor predicción en datos nuevos?
 
-<!-- COMPLETAR. Idea central: NO. El AIC se calcula unicamente con los
-datos de entrenamiento, por lo que es una aproximacion a la capacidad
-de generalizacion, no una garantia. La unica forma de evaluar el
-desempeño real en datos nuevos es medirlo en el conjunto de prueba,
-lo que se hace en la seccion 3.6. -->
+No. El AIC se calcula únicamente con los datos de entrenamiento, así que es una aproximación a la capacidad de generalizar, no una garantía. Puede pasar que un modelo con menor AIC rinda peor en datos nuevos. La única forma de saber cómo predice de verdad es evaluarlo en el conjunto de prueba, que es justamente lo que hacemos en la sección 3.6.
 
 ## 3.5 Ridge y lasso
 
