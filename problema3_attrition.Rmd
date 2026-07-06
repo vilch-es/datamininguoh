@@ -745,11 +745,7 @@ fviz_nbclust(datos_esc, kmeans, method = "silhouette", k.max = 8) +
   labs(title = "Método silhouette")
 ```
 
-<!-- COMPLETAR: indicar donde se observa el codo y que k maximiza el
-silhouette promedio. Con estos datos lo tipico es que ambos criterios
-sugieran un k pequeño (2 o 3). Justificar el k elegido con ambos
-graficos. Si eligen un k distinto al del silhouette, explicar por que
-(ej: interpretabilidad de los perfiles). -->
+El método silhouette alcanza su máximo en k=2 (ancho promedio cercano a 0,21), y el codo muestra la caída más fuerte hasta k=2-3 y después ganancias marginales. Elegimos k=3: aunque el silhouette favorece levemente k=2, la solución con tres grupos mantiene un silhouette razonable, es consistente con el codo y entrega perfiles más ricos para el análisis organizacional, como se ve en la caracterización más adelante. Eso sí, hay que ser honestos: todos los valores de silhouette son bajos (menores a 0,25), lo que indica que los clusters no están fuertemente separados; los perfiles de trabajadores forman más bien un continuo que grupos nítidos.
 
 ### b) Modelo k-means final
 
@@ -779,9 +775,7 @@ scores %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: comentar si los clusters se ven razonablemente
-separados en el mapa PC1-PC2. Como PC1 capturaba seniority/ingreso,
-es esperable que los clusters se ordenen a lo largo de ese eje. -->
+Los clusters se ordenan principalmente a lo largo de PC1, el eje de seniority: un grupo hacia los valores bajos (perfiles junior), otro hacia los altos (perfiles senior) y uno intermedio. Tiene sentido, porque PC1 es la dirección de mayor varianza de los datos y el clustering tiende a separar por ahí. Los bordes entre grupos se ven difusos, coherente con los valores bajos de silhouette.
 
 ### d) Clustering jerárquico: complete y Ward
 
@@ -813,10 +807,7 @@ table(kmeans = km_final$cluster, ward = grupos_ward)
 table(kmeans = km_final$cluster, complete = grupos_complete)
 ```
 
-<!-- COMPLETAR: comentar cual jerarquico se parece mas a k-means.
-Lo tipico: Ward produce grupos de tamaños balanceados y similares a
-k-means (ambos minimizan varianza interna), mientras que complete
-suele generar algun cluster muy chico o desbalanceado. -->
+Ward es claramente el más parecido a k-means: las asignaciones coinciden en cerca del 85% de los casos (562 + 95 + 216 = 873 de 1.029 trabajadores caen en la combinación dominante de cada fila). Tiene lógica, porque Ward y k-means persiguen lo mismo: minimizar la varianza dentro de cada grupo. Complete linkage, en cambio, entrega grupos muy desbalanceados: junta a 771 trabajadores en un solo cluster gigante y reparte el resto en dos grupos chicos, mezclando perfiles que k-means y Ward sí distinguen. Para estos datos, Ward entrega los grupos más coherentes.
 
 ### e) Comparación de los clusters con Attrition
 
@@ -848,33 +839,23 @@ attr_train %>%
   mutate(across(where(is.numeric), ~ round(., 2)))
 ```
 
-<!-- COMPLETAR: describir cada cluster con nombre propio usando la
-tabla. Ejemplo del formato esperado (los valores reales saldran del
-output):
-- Cluster X: perfil junior (menor edad, menor ingreso, pocos años en
-  la empresa) con mayor proporcion de horas extra y la mayor tasa de
-  rotacion.
-- Cluster Y: perfil intermedio...
-- Cluster Z: perfil senior (mayor ingreso y antiguedad) con la menor
-  rotacion. -->
+Los tres clusters describen perfiles bien distintos:
+
+**Cluster 1 — perfil junior (n=579, el más numeroso):** trabajadores jóvenes (34,4 años en promedio), con el menor ingreso (≈$4.287), poca antigüedad (3,4 años) y la mayor proporción de horas extra (29%). Concentra la mayor rotación: un 20%.
+
+**Cluster 2 — perfil senior (n=160):** el grupo de mayor edad (47,9 años), mayor ingreso (≈$15.548) y más años en la empresa (14,5). Tiene la menor rotación: solo 7%.
+
+**Cluster 3 — perfil intermedio (n=290):** edad media (36,2 años), ingreso medio (≈$6.280) y antigüedad considerable (10,3 años), con rotación baja (9%).
+
+Un detalle interesante: la satisfacción laboral promedio es casi igual en los tres grupos (≈2,7), así que no es lo que los distingue. La separación viene por el eje de seniority: edad, ingreso y antigüedad.
 
 ### g) ¿Algún cluster concentra mayor rotación?
 
-<!-- COMPLETAR con la tabla de proporciones de e): identificar el
-cluster con mayor prop_attrition y conectarlo con su perfil. Lo
-esperable es que el cluster junior/de menores ingresos concentre una
-tasa de rotacion claramente mayor que el resto, coherente con los
-hallazgos de 3.2 y 3.3. -->
+Sí, claramente el cluster 1: su tasa de rotación (20%) casi triplica la de los otros dos (7% y 9%). Lo más notable es que el clustering nunca vio la variable Attrition y aun así redescubrió, por un camino totalmente independiente, el mismo perfil de riesgo que encontraron los modelos supervisados: trabajadores jóvenes, de bajos ingresos, con poca antigüedad y más horas extra.
 
 ### h) Interpretación organizacional
 
-<!-- COMPLETAR. Ideas: los clusters funcionan como "segmentos" de
-trabajadores que permiten focalizar politicas de retencion. En vez de
-una politica unica para toda la empresa, RRHH podria priorizar al
-segmento de mayor riesgo (ej: junior con horas extra y sueldos bajos)
-con medidas como revision salarial, limites a las horas extra o planes
-de desarrollo de carrera. Los perfiles tambien ayudan a comunicar los
-resultados a personas no tecnicas. -->
+Los clusters funcionan como segmentos accionables para recursos humanos. En vez de aplicar políticas iguales para todos, la empresa podría enfocar la retención en el cluster 1, que además es el grupo más numeroso, con medidas como revisar los sueldos de entrada, limitar o compensar las horas extra y ofrecer planes de desarrollo de carrera temprana. El cluster 2 sugiere que la combinación de buen ingreso y trayectoria larga retiene por sí sola, y el cluster 3 muestra que pasada cierta antigüedad el riesgo cae harto. En conjunto, los primeros años parecen ser la ventana crítica para retener.
 
 ## 3.10 Discusión final del problema
 
