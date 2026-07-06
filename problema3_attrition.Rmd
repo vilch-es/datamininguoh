@@ -861,85 +861,46 @@ Los clusters funcionan como segmentos accionables para recursos humanos. En vez 
 
 ### a) ¿Qué variables parecen más importantes para predecir rotación?
 
-<!-- COMPLETAR triangulando tres fuentes: los graficos de 3.2, los odds
-ratios de 3.3 y las selecciones de AIC (3.4) y lasso (3.5). Las
-variables que aparecen en TODAS son las importantes. Lo esperable:
-OverTime como el factor mas fuerte, junto a satisfaccion laboral,
-ingreso, antiguedad, distancia al hogar y ciertos cargos. -->
+Triangulando las tres fuentes (gráficos de 3.2, odds ratios de 3.3 y las selecciones de AIC y lasso), la variable más importante es lejos OverTime: apareció fuerte en todas las técnicas (OR = 5,49 en el modelo logístico y el coeficiente más grande del lasso). Le siguen la satisfacción laboral y el involucramiento con el trabajo (protectores), el cargo (Sales Representative y Laboratory Technician como los de mayor riesgo), el estado civil soltero, los viajes frecuentes, y las variables de edad y antigüedad. Un hallazgo transversal fue que las variables de ingreso resultaron redundantes: tanto AIC como lasso las descartaron porque su información ya está contenida en el cargo y la experiencia.
 
 ### b) ¿Qué modelo tuvo mejor desempeño predictivo?
 
-<!-- COMPLETAR con la tabla resultados_final de 3.8: indicar el modelo
-con mayor AUC y balanced accuracy, y comentar si la diferencia con el
-resto es grande o marginal (lo tipico es que sea pequeña). -->
+El modelo seleccionado por AIC fue el mejor en todas las métricas relevantes: mayor AUC (0,804), mayor sensibilidad (0,402) y mejor balanced accuracy (0,673). Ridge y lasso quedaron cerca en AUC pero con sensibilidades mucho peores, y el modelo basado en PCA fue lejos el peor (AUC 0,657, sensibilidad 0,012).
 
 ### c) ¿Qué modelo fue más interpretable?
 
-<!-- COMPLETAR. Argumento tipico: el logistico de 3.3 o el AIC, porque
-permiten leer odds ratios variable por variable. Lasso tambien es
-interpretable por reducir variables. Ridge y el modelo con PCA son los
-menos interpretables (ridge conserva todo; PCA usa combinaciones de
-variables sin significado directo). -->
+El modelo logístico de 3.3 y el AIC son los más interpretables, porque permiten leer odds ratios variable por variable. En este problema se dio algo conveniente: el modelo AIC ganó al mismo tiempo en predicción y quedó entre los más interpretables, así que no hubo que sacrificar una cosa por la otra. Ridge (conserva todo) y el modelo PCA (coeficientes sobre combinaciones de variables) son los menos interpretables.
 
 ### d) ¿Qué aportó PCA al análisis?
 
-<!-- COMPLETAR. Ideas: permitio resumir ~23 variables numericas en
-pocos ejes con significado (seniority, estancamiento en el rol),
-sirvio como mapa 2D para visualizar trabajadores y clusters, y mostro
-que la varianza esta muy repartida (se necesitan muchos componentes
-para el 80%). Como herramienta PREDICTIVA no mejoro los resultados
-(seccion 3.8). -->
+PCA aportó principalmente como herramienta exploratoria: permitió resumir las 16 variables numéricas en ejes con significado (PC1 como seniority y PC2 como estabilidad versus movilidad laboral), sirvió de mapa 2D para visualizar a los trabajadores y los clusters, y mostró que la varianza está muy repartida (se necesitan 9 componentes para el 80%). Como herramienta predictiva, en cambio, fracasó: el modelo sobre componentes fue el peor de los cinco, en parte porque dejó fuera los predictores categóricos más importantes.
 
 ### e) ¿Qué aportó clustering al análisis?
 
-<!-- COMPLETAR. Ideas: identifico perfiles de trabajadores sin usar la
-variable respuesta, y uno de esos perfiles (tipicamente el junior de
-menores ingresos y mas horas extra) concentro una rotacion claramente
-mayor. Esto valida los hallazgos supervisados por un camino
-independiente y entrega segmentos accionables para RRHH. -->
+El clustering identificó tres perfiles de trabajadores (junior, intermedio y senior) sin usar nunca la variable respuesta, y uno de ellos —el junior, con sueldos bajos y más horas extra— concentró una rotación del 20%, casi el triple que los otros. Esto validó por un camino independiente lo que encontraron los modelos supervisados, y además entregó segmentos concretos sobre los cuales recursos humanos podría actuar.
 
 ### f) Limitaciones del dataset para decisiones reales en RRHH
 
-<!-- COMPLETAR desarrollando al menos estas ideas:
+Vemos al menos cuatro limitaciones importantes:
 
-1. Datos transversales (una "foto"): permiten ver asociaciones, no
-   causalidad. No se puede afirmar que el sueldo bajo CAUSA la
-   renuncia; puede haber factores no medidos detras de ambos.
+1. **Los datos son una foto, no una película:** es información transversal, de un solo momento. Podemos ver asociaciones (sueldo bajo va junto con renuncia) pero no causalidad: no sabemos el orden de los hechos ni si hay factores no medidos detrás de ambas cosas.
 
-2. Una sola organizacion (dataset de demostracion de IBM): los
-   patrones no necesariamente generalizan a otras empresas, rubros o
-   paises.
+2. **Es una sola organización, y encima es un dataset de demostración de IBM:** los patrones que encontramos no tienen por qué repetirse en otra empresa, otro rubro u otro país.
 
-3. Variables ausentes: no se mide clima laboral real, calidad de la
-   jefatura, ofertas externas, salud, situacion familiar, etc.,
-   factores tipicamente decisivos en una renuncia.
+3. **Faltan variables que probablemente importan mucho:** no está el clima laboral real, la relación con la jefatura, las ofertas externas que recibió cada persona, ni su situación familiar. Cosas que en la vida real suelen pesar harto en una renuncia.
 
-4. Ausencia de dimension temporal: no se sabe CUANDO renuncio cada
-   persona ni como evolucionaron sus condiciones antes de irse. -->
+4. **No hay dimensión temporal:** no sabemos cuándo renunció cada persona ni cómo evolucionaron sus condiciones antes de irse.
 
 ### g) Precauciones éticas antes de usar un modelo de rotación
 
-<!-- COMPLETAR desarrollando al menos estas ideas:
+Antes de usar un modelo así en una organización real habría que considerar al menos esto:
 
-1. Riesgo de profecia autocumplida: si la organizacion trata distinto
-   (menos inversion, menos ascensos) a quien el modelo marca como
-   "riesgo de fuga", puede provocar exactamente la renuncia que
-   intentaba prevenir.
+1. **Riesgo de profecía autocumplida:** si la empresa trata distinto a quien el modelo marca como "riesgo de fuga" (menos inversión, menos ascensos, menos capacitación), puede terminar provocando exactamente la renuncia que quería evitar.
 
-2. Uso del modelo: deberia orientarse a mejorar condiciones (apoyo,
-   retencion) y no a castigar o filtrar personas (decisiones de
-   contratacion, despido o promocion basadas en el puntaje).
+2. **Para qué se usa:** el mismo modelo sirve para apoyar (mejorar las condiciones del grupo de riesgo) o para castigar (no contratar o no promover perfiles "riesgosos"). Debería usarse solo para lo primero.
 
-3. Sesgos y discriminacion: el modelo usa variables como edad, genero
-   o estado civil; tomar decisiones laborales basadas en ellas puede
-   ser discriminatorio e incluso ilegal. Evaluar excluir variables
-   protegidas.
+3. **Sesgos y discriminación:** el modelo usa edad, género y estado civil. Tomar decisiones laborales basadas en esas variables puede ser discriminatorio e incluso ilegal; habría que evaluar excluirlas.
 
-4. Errores del modelo: las matrices de confusion de 3.6 muestran
-   falsos positivos y negativos considerables; cada error es una
-   persona real mal clasificada, por lo que el modelo debe ser un
-   insumo mas y no un decisor automatico.
+4. **El modelo se equivoca harto:** nuestras matrices de confusión muestran que incluso el mejor modelo detectó menos de la mitad de las renuncias reales, y cada falso positivo es una persona real mal etiquetada. El modelo debería ser un insumo más para las decisiones, nunca un decisor automático.
 
-5. Transparencia y consentimiento: los trabajadores deberian saber
-   que sus datos se usan para este fin, y las predicciones deberian
-   manejarse con confidencialidad. -->
+5. **Transparencia:** los trabajadores deberían saber que sus datos se usan para esto, y las predicciones deberían manejarse con confidencialidad.
