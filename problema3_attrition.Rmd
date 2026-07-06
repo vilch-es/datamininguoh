@@ -861,3 +861,165 @@ mejora el desempeño y ademas excluye variables categoricas clave
 visualizar/clusterizar (secciones 3.7 y 3.9) si es una herramienta
 valiosa. -->
 
+## 3.9 Clustering de perfiles laborales
+
+Aplicamos clustering (aprendizaje no supervisado) sobre las variables
+numericas estandarizadas del set de entrenamiento, SIN usar Attrition.
+La idea es descubrir perfiles de trabajadores por similitud y luego
+comparar los grupos encontrados con la rotacion real.
+
+```{r datos-clustering}
+library(cluster)
+
+# estandarizamos las variables numericas: media 0, desviacion 1.
+# el clustering se basa en distancias, por lo que sin escalar las
+# variables de mayor magnitud (ej: MonthlyIncome) dominarian todo.
+datos_esc <- scale(datos_num)
+```
+
+### a) Elección del número de clusters: codo y silhouette
+
+```{r codo-silhouette, cache=TRUE, fig.height=4}
+set.seed(2026)
+
+# metodo del codo: suma de distancias dentro de cada cluster segun k.
+# buscamos el punto donde agregar clusters deja de aportar
+fviz_nbclust(datos_esc, kmeans, method = "wss", k.max = 8) +
+  labs(title = "Método del codo")
+
+# silhouette promedio segun k: mas alto = grupos mejor definidos
+fviz_nbclust(datos_esc, kmeans, method = "silhouette", k.max = 8) +
+  labs(title = "Método silhouette")
+```
+
+<!-- COMPLETAR: indicar donde se observa el codo y que k maximiza el
+silhouette promedio. Con estos datos lo tipico es que ambos criterios
+sugieran un k pequeño (2 o 3). Justificar el k elegido con ambos
+graficos. Si eligen un k distinto al del silhouette, explicar por que
+(ej: interpretabilidad de los perfiles). -->
+
+### b) Modelo k-means final
+
+```{r kmeans-final}
+set.seed(2026)
+
+# AJUSTAR k segun lo observado en los graficos anteriores
+k_final <- 3
+
+# nstart = 25: repite el algoritmo con 25 inicios aleatorios distintos
+# y se queda con la mejor solucion (k-means depende del punto de partida)
+km_final <- kmeans(datos_esc, centers = k_final, nstart = 25)
+
+# tamaño de cada cluster
+km_final$size
+```
+
+### c) Visualización de los clusters en el espacio PC1-PC2
+
+```{r clusters-pca, fig.height=5}
+# usamos los scores del PCA de 3.7 como "mapa" 2D para dibujar
+scores %>%
+  mutate(cluster = factor(km_final$cluster)) %>%
+  ggplot(aes(x = PC1, y = PC2, color = cluster)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Clusters de k-means en el espacio PC1-PC2") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: comentar si los clusters se ven razonablemente
+separados en el mapa PC1-PC2. Como PC1 capturaba seniority/ingreso,
+es esperable que los clusters se ordenen a lo largo de ese eje. -->
+
+### d) Clustering jerárquico: complete y Ward
+
+```{r jerarquico, cache=TRUE, fig.height=4}
+# matriz de distancias euclidianas entre trabajadores
+d <- dist(datos_esc)
+
+# dos metodos de enlace
+hc_complete <- hclust(d, method = "complete")
+hc_ward     <- hclust(d, method = "ward.D2")
+
+# dendrogramas (labels = FALSE porque son ~1000 observaciones)
+plot(hc_complete, labels = FALSE, hang = -1,
+     main = "Dendrograma - Complete linkage", xlab = "", sub = "")
+rect.hclust(hc_complete, k = k_final, border = "red")
+
+plot(hc_ward, labels = FALSE, hang = -1,
+     main = "Dendrograma - Ward.D2", xlab = "", sub = "")
+rect.hclust(hc_ward, k = k_final, border = "blue")
+```
+
+```{r corte-dendrograma}
+# cortamos ambos arboles en k_final grupos
+grupos_complete <- cutree(hc_complete, k = k_final)
+grupos_ward     <- cutree(hc_ward,     k = k_final)
+
+# comparamos las asignaciones de cada metodo con las de k-means
+table(kmeans = km_final$cluster, ward = grupos_ward)
+table(kmeans = km_final$cluster, complete = grupos_complete)
+```
+
+<!-- COMPLETAR: comentar cual jerarquico se parece mas a k-means.
+Lo tipico: Ward produce grupos de tamaños balanceados y similares a
+k-means (ambos minimizan varianza interna), mientras que complete
+suele generar algun cluster muy chico o desbalanceado. -->
+
+### e) Comparación de los clusters con Attrition
+
+```{r clusters-attrition}
+# tabla cruzada: cluster vs rotacion real (recien aqui usamos Attrition)
+tabla_attr <- table(cluster = km_final$cluster,
+                    Attrition = attr_train$Attrition)
+tabla_attr
+
+# proporcion de rotacion dentro de cada cluster
+round(prop.table(tabla_attr, margin = 1), 3)
+```
+
+### f) Caracterización de cada cluster
+
+```{r caracterizacion}
+attr_train %>%
+  mutate(cluster = km_final$cluster) %>%
+  group_by(cluster) %>%
+  summarise(
+    n = n(),
+    edad_prom = mean(Age),
+    ingreso_prom = mean(MonthlyIncome),
+    anios_empresa_prom = mean(YearsAtCompany),
+    satisfaccion_prom = mean(as.numeric(JobSatisfaction)),
+    prop_overtime = mean(OverTime == "Yes"),
+    prop_attrition = mean(Attrition == "Yes")
+  ) %>%
+  mutate(across(where(is.numeric), ~ round(., 2)))
+```
+
+<!-- COMPLETAR: describir cada cluster con nombre propio usando la
+tabla. Ejemplo del formato esperado (los valores reales saldran del
+output):
+- Cluster X: perfil junior (menor edad, menor ingreso, pocos años en
+  la empresa) con mayor proporcion de horas extra y la mayor tasa de
+  rotacion.
+- Cluster Y: perfil intermedio...
+- Cluster Z: perfil senior (mayor ingreso y antiguedad) con la menor
+  rotacion. -->
+
+### g) ¿Algún cluster concentra mayor rotación?
+
+<!-- COMPLETAR con la tabla de proporciones de e): identificar el
+cluster con mayor prop_attrition y conectarlo con su perfil. Lo
+esperable es que el cluster junior/de menores ingresos concentre una
+tasa de rotacion claramente mayor que el resto, coherente con los
+hallazgos de 3.2 y 3.3. -->
+
+### h) Interpretación organizacional
+
+<!-- COMPLETAR. Ideas: los clusters funcionan como "segmentos" de
+trabajadores que permiten focalizar politicas de retencion. En vez de
+una politica unica para toda la empresa, RRHH podria priorizar al
+segmento de mayor riesgo (ej: junior con horas extra y sueldos bajos)
+con medidas como revision salarial, limites a las horas extra o planes
+de desarrollo de carrera. Los perfiles tambien ayudan a comunicar los
+resultados a personas no tecnicas. -->
+
