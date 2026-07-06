@@ -1023,3 +1023,89 @@ con medidas como revision salarial, limites a las horas extra o planes
 de desarrollo de carrera. Los perfiles tambien ayudan a comunicar los
 resultados a personas no tecnicas. -->
 
+## 3.10 Discusión final del problema
+
+### a) ¿Qué variables parecen más importantes para predecir rotación?
+
+<!-- COMPLETAR triangulando tres fuentes: los graficos de 3.2, los odds
+ratios de 3.3 y las selecciones de AIC (3.4) y lasso (3.5). Las
+variables que aparecen en TODAS son las importantes. Lo esperable:
+OverTime como el factor mas fuerte, junto a satisfaccion laboral,
+ingreso, antiguedad, distancia al hogar y ciertos cargos. -->
+
+### b) ¿Qué modelo tuvo mejor desempeño predictivo?
+
+<!-- COMPLETAR con la tabla resultados_final de 3.8: indicar el modelo
+con mayor AUC y balanced accuracy, y comentar si la diferencia con el
+resto es grande o marginal (lo tipico es que sea pequeña). -->
+
+### c) ¿Qué modelo fue más interpretable?
+
+<!-- COMPLETAR. Argumento tipico: el logistico de 3.3 o el AIC, porque
+permiten leer odds ratios variable por variable. Lasso tambien es
+interpretable por reducir variables. Ridge y el modelo con PCA son los
+menos interpretables (ridge conserva todo; PCA usa combinaciones de
+variables sin significado directo). -->
+
+### d) ¿Qué aportó PCA al análisis?
+
+<!-- COMPLETAR. Ideas: permitio resumir ~23 variables numericas en
+pocos ejes con significado (seniority, estancamiento en el rol),
+sirvio como mapa 2D para visualizar trabajadores y clusters, y mostro
+que la varianza esta muy repartida (se necesitan muchos componentes
+para el 80%). Como herramienta PREDICTIVA no mejoro los resultados
+(seccion 3.8). -->
+
+### e) ¿Qué aportó clustering al análisis?
+
+<!-- COMPLETAR. Ideas: identifico perfiles de trabajadores sin usar la
+variable respuesta, y uno de esos perfiles (tipicamente el junior de
+menores ingresos y mas horas extra) concentro una rotacion claramente
+mayor. Esto valida los hallazgos supervisados por un camino
+independiente y entrega segmentos accionables para RRHH. -->
+
+### f) Limitaciones del dataset para decisiones reales en RRHH
+
+<!-- COMPLETAR desarrollando al menos estas ideas:
+
+1. Datos transversales (una "foto"): permiten ver asociaciones, no
+   causalidad. No se puede afirmar que el sueldo bajo CAUSA la
+   renuncia; puede haber factores no medidos detras de ambos.
+
+2. Una sola organizacion (dataset de demostracion de IBM): los
+   patrones no necesariamente generalizan a otras empresas, rubros o
+   paises.
+
+3. Variables ausentes: no se mide clima laboral real, calidad de la
+   jefatura, ofertas externas, salud, situacion familiar, etc.,
+   factores tipicamente decisivos en una renuncia.
+
+4. Ausencia de dimension temporal: no se sabe CUANDO renuncio cada
+   persona ni como evolucionaron sus condiciones antes de irse. -->
+
+### g) Precauciones éticas antes de usar un modelo de rotación
+
+<!-- COMPLETAR desarrollando al menos estas ideas:
+
+1. Riesgo de profecia autocumplida: si la organizacion trata distinto
+   (menos inversion, menos ascensos) a quien el modelo marca como
+   "riesgo de fuga", puede provocar exactamente la renuncia que
+   intentaba prevenir.
+
+2. Uso del modelo: deberia orientarse a mejorar condiciones (apoyo,
+   retencion) y no a castigar o filtrar personas (decisiones de
+   contratacion, despido o promocion basadas en el puntaje).
+
+3. Sesgos y discriminacion: el modelo usa variables como edad, genero
+   o estado civil; tomar decisiones laborales basadas en ellas puede
+   ser discriminatorio e incluso ilegal. Evaluar excluir variables
+   protegidas.
+
+4. Errores del modelo: las matrices de confusion de 3.6 muestran
+   falsos positivos y negativos considerables; cada error es una
+   persona real mal clasificada, por lo que el modelo debe ser un
+   insumo mas y no un decisor automatico.
+
+5. Transparencia y consentimiento: los trabajadores deberian saber
+   que sus datos se usan para este fin, y las predicciones deberian
+   manejarse con confidencialidad. -->
