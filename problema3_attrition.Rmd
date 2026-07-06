@@ -372,12 +372,7 @@ cv_lasso$lambda.min
 cv_lasso$lambda.1se
 ```
 
-<!-- COMPLETAR: reportar los valores. Idea para la interpretacion:
-lambda.min es el que minimiza el error de validacion cruzada, mientras
-que lambda.1se es un valor mas estricto cuyo error esta a menos de un
-error estandar del minimo; produce un modelo mas simple con un
-rendimiento practicamente equivalente. Para interpretacion se suele
-preferir lambda.1se. -->
+En ridge la validación cruzada dio lambda.min = 0,0120 y lambda.1se = 0,0772; en lasso, lambda.min = 0,0042 y lambda.1se = 0,0129. En ambos casos lambda.1se es mayor, y eso tiene su lógica: lambda.min es el valor que minimiza el error de validación cruzada, mientras que lambda.1se aplica una penalización más fuerte cuyo error queda a menos de un error estándar del mínimo. O sea, entrega un modelo más simple que rinde prácticamente igual. Para interpretar preferimos lambda.1se.
 
 ### e) Variables que conserva lasso
 
@@ -400,8 +395,7 @@ nrow(coef_lasso_df)
 ncol(x_train)
 ```
 
-<!-- COMPLETAR: comentar cuantas variables (dummies) conserva lasso de
-las disponibles y cuales son las principales. -->
+Con lambda.1se, lasso conservó 26 coeficientes distintos de cero de los 59 disponibles, o sea que eliminó más de la mitad. Los de mayor peso son OverTimeYes (coeficiente 1,49, lejos el más grande), JobInvolvement lineal (protector, -0,94), MaritalStatusSingle (0,71), BusinessTravelTravel_Frequently (0,68) y los cargos de Laboratory Technician y Sales Representative. Destaca que MonthlyIncome, HourlyRate y MonthlyRate fueron llevadas exactamente a cero, igual que hizo la selección por AIC.
 
 ### f) Gráfico de los coeficientes más relevantes del lasso
 
@@ -418,10 +412,7 @@ coef_lasso_df %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar el grafico. Los coeficientes positivos
-(tipicamente OverTimeYes, algunos cargos, frecuencia de viajes) se
-asocian a mayor rotacion; los negativos (satisfaccion, antiguedad,
-stock options) actuan como factores protectores. -->
+El gráfico muestra los 15 coeficientes más relevantes del lasso. Entre los que aumentan el riesgo de rotación destacan OverTimeYes (el positivo más grande por lejos), estar soltero (MaritalStatusSingle), viajar frecuentemente por trabajo y los cargos de Laboratory Technician y Sales Representative. Entre los protectores, el más fuerte es JobInvolvement, seguido de la satisfacción con el ambiente, la satisfacción laboral y el work-life balance. Es coherente con el modelo de 3.3, pero el lasso además "descubrió" solo variables que nosotros no habíamos incluido a mano, como el estado civil y la frecuencia de viajes.
 
 ### g) Comparación lasso vs AIC
 
@@ -433,30 +424,17 @@ all.vars(formula(modelo_aic))[-1]
 coef_lasso_df$variable
 ```
 
-<!-- COMPLETAR: comparar ambas listas. Ojo con un detalle: AIC
-selecciona variables completas (ej: JobRole entero), mientras que lasso
-selecciona dummies individuales (ej: solo JobRoleSales Representative).
-Lo esperable es un nucleo comun (OverTime, satisfaccion, variables de
-antiguedad) con diferencias en los bordes. -->
+Los dos métodos coinciden en el núcleo: OverTime, JobSatisfaction, EnvironmentSatisfaction, JobInvolvement, WorkLifeBalance, JobRole, MaritalStatus y BusinessTravel aparecen en ambas selecciones. La diferencia principal es el nivel de detalle: AIC selecciona variables completas (por ejemplo JobRole entero con todas sus categorías), mientras que lasso elige dummies individuales (solo los cargos de mayor riesgo). Además los dos coincidieron en descartar las variables de ingreso, lo que refuerza la idea de que esa información es redundante con el cargo y la experiencia.
 
 ### Discusión
 
-<!-- COMPLETAR las cuatro preguntas. Ideas centrales:
+a) Sí. Lasso conservó 26 de 59 dummies, mientras que AIC se quedó con 20 de 30 variables. Lasso poda más agresivo y con más detalle, porque puede descartar categorías individuales de una variable en vez de la variable completa.
 
-a) Lasso, con lambda.1se, tipicamente selecciona un conjunto igual o
-   mas pequeño que AIC. Comparar los numeros obtenidos.
+b) No. Al revisar los coeficientes de ridge, ninguno es exactamente cero: ridge encoge todos los coeficientes pero mantiene las 59 variables en el modelo. Esa es justamente la diferencia estructural entre las dos penalizaciones.
 
-b) NO. Ridge encoge los coeficientes pero nunca los lleva exactamente
-   a cero: conserva todas las variables. Se puede verificar contando
-   los coeficientes distintos de cero de cv_ridge.
+c) Para interpretación nos parece más útil lasso: deja un modelo reducido donde cada variable que quedó tiene un rol claro, fácil de explicar a alguien no técnico.
 
-c) Para interpretacion es mas util lasso: entrega un modelo con pocas
-   variables, facil de comunicar.
-
-d) Para prediccion depende de los datos y se evaluara empiricamente en
-   3.6. Ridge suele rendir bien cuando hay muchas variables
-   correlacionadas que aportan de a poco; lasso cuando pocas variables
-   concentran la señal. -->
+d) Para predicción, en teoría ridge funciona bien cuando hay muchas variables correlacionadas que aportan de a poco. Pero en nuestros datos la evaluación de 3.6 mostró que ridge tiene buen AUC (0,798) pero una sensibilidad malísima, así que en la práctica la diferencia predictiva entre métodos fue menor de lo que esperábamos.
 
 ## 3.6 Evaluación predictiva
 
