@@ -776,3 +776,88 @@ experiencia/ingreso de PC1). -->
   ascenso.
 Justificar SIEMPRE con las variables que cargan mas en cada uno. -->
 
+## 3.8 Modelo usando componentes principales
+
+Ajustamos una regresion logistica usando como predictores los primeros
+componentes principales que acumulan al menos 80% de la varianza, y la
+comparamos con los cuatro modelos anteriores.
+
+```{r pcs-train-test}
+# numero de componentes que acumulan al menos 80% de la varianza
+n_pcs <- min(which(var_exp$acumulada >= 0.80))
+n_pcs
+
+# scores de entrenamiento: la proyeccion de cada trabajador del set de
+# entrenamiento sobre los primeros n_pcs componentes
+pcs_train <- as.data.frame(pca_attr$x[, 1:n_pcs]) %>%
+  mutate(Attrition = attr_train$Attrition)
+
+# IMPORTANTE: el test se proyecta con el PCA ajustado en ENTRENAMIENTO
+# (mismas medias, desviaciones y rotacion). Calcular un PCA nuevo sobre
+# el test seria data leakage y un espacio de coordenadas distinto.
+datos_num_test <- attr_test %>% select(where(is.numeric))
+
+pcs_test <- as.data.frame(predict(pca_attr, newdata = datos_num_test)[, 1:n_pcs]) %>%
+  mutate(Attrition = attr_test$Attrition)
+```
+
+```{r modelo-pca}
+# regresion logistica con los componentes como predictores
+modelo_pca <- glm(Attrition ~ ., data = pcs_train, family = binomial)
+
+summary(modelo_pca)
+```
+
+<!-- COMPLETAR (opcional pero recomendado): comentar que componentes
+resultan significativos. Como los PCs no estan correlacionados entre
+si, cada coeficiente se interpreta de forma independiente. -->
+
+```{r evaluacion-pca}
+# probabilidades predichas en el test y comparacion con los 4 modelos
+prob_pca <- predict(modelo_pca, newdata = pcs_test, type = "response")
+
+resultados_final <- bind_rows(
+  resultados,
+  calcular_metricas(prob_pca, attr_test$Attrition) %>% mutate(modelo = "PCA + logistica")
+) %>%
+  select(modelo, everything())
+
+resultados_final
+
+# matriz de confusion del modelo PCA
+matriz_confusion(prob_pca, attr_test$Attrition)
+```
+
+### a) ¿El modelo basado en PCA mejora o empeora la predicción?
+
+<!-- COMPLETAR con la tabla resultados_final: comparar AUC, sensibilidad
+y balanced accuracy del modelo PCA contra los otros cuatro. Lo
+esperable es que quede en un rango similar o levemente inferior:
+PCA comprime las variables sin mirar la respuesta, por lo que puede
+perder algo de señal predictiva. Ademas, este modelo solo usa las
+variables NUMERICAS: pierde predictores categoricos importantes como
+OverTime y JobRole, lo que ayuda a explicar un rendimiento menor. -->
+
+### b) ¿Qué se gana al aplicar PCA antes de la regresión?
+
+<!-- COMPLETAR. Ideas: (1) reduccion de dimensionalidad: menos
+predictores; (2) elimina la multicolinealidad, ya que los componentes
+son ortogonales (no correlacionados) entre si; (3) puede estabilizar
+la estimacion cuando hay muchas variables redundantes. -->
+
+### c) ¿Qué se pierde en términos de interpretación?
+
+<!-- COMPLETAR. Idea: los coeficientes ya no refieren a variables
+concretas sino a combinaciones de ellas. Un odds ratio de "PC1" no es
+accionable para la organizacion sin volver a las cargas y traducirlo,
+lo que hace la comunicacion de resultados mucho mas indirecta. -->
+
+### d) ¿Recomendaría PCA para este problema?
+
+<!-- COMPLETAR con opinion del grupo, justificada con los resultados.
+Argumento tipico: para PREDECIR rotacion no se recomienda, porque no
+mejora el desempeño y ademas excluye variables categoricas clave
+(OverTime, JobRole); para EXPLORAR la estructura de los datos y para
+visualizar/clusterizar (secciones 3.7 y 3.9) si es una herramienta
+valiosa. -->
+
