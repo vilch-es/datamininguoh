@@ -386,3 +386,147 @@ de generalizacion, no una garantia. La unica forma de evaluar el
 desempeño real en datos nuevos es medirlo en el conjunto de prueba,
 lo que se hace en la seccion 3.6. -->
 
+## 3.5 Ridge y lasso
+
+Ridge y lasso son regresiones logisticas penalizadas: agregan un castigo
+a los coeficientes grandes para evitar el sobreajuste. Ridge encoge los
+coeficientes sin eliminarlos; lasso puede llevarlos exactamente a cero,
+realizando seleccion de variables. El parametro lambda controla la
+intensidad de la penalizacion y se elige por validacion cruzada.
+
+```{r matrices-glmnet}
+library(glmnet)
+
+# glmnet requiere una matriz numerica: model.matrix convierte las
+# variables categoricas en dummies (0/1). El [, -1] elimina la columna
+# de intercepto que agrega por defecto.
+x_train <- model.matrix(Attrition ~ ., data = attr_train)[, -1]
+y_train <- attr_train$Attrition
+
+x_test <- model.matrix(Attrition ~ ., data = attr_test)[, -1]
+y_test <- attr_test$Attrition
+
+# nota: glmnet estandariza las variables internamente (standardize = TRUE
+# por defecto), por lo que no es necesario escalar a mano.
+dim(x_train)
+```
+
+### a) b) c) Ajuste con validación cruzada
+
+```{r cv-ridge-lasso, cache=TRUE}
+set.seed(2026)
+
+# ridge: alpha = 0 (encoge coeficientes, no elimina variables)
+cv_ridge <- cv.glmnet(x_train, y_train, family = "binomial", alpha = 0)
+
+# lasso: alpha = 1 (puede llevar coeficientes exactamente a cero)
+cv_lasso <- cv.glmnet(x_train, y_train, family = "binomial", alpha = 1)
+```
+
+```{r curvas-cv, fig.height=4}
+# curvas de validacion cruzada: error segun lambda.
+# las lineas verticales marcan lambda.min y lambda.1se
+par(mfrow = c(1, 2))
+plot(cv_ridge, main = "Ridge")
+plot(cv_lasso, main = "Lasso")
+par(mfrow = c(1, 1))
+```
+
+### d) Comparación de lambda.min y lambda.1se
+
+```{r lambdas}
+# ridge
+cv_ridge$lambda.min
+cv_ridge$lambda.1se
+
+# lasso
+cv_lasso$lambda.min
+cv_lasso$lambda.1se
+```
+
+<!-- COMPLETAR: reportar los valores. Idea para la interpretacion:
+lambda.min es el que minimiza el error de validacion cruzada, mientras
+que lambda.1se es un valor mas estricto cuyo error esta a menos de un
+error estandar del minimo; produce un modelo mas simple con un
+rendimiento practicamente equivalente. Para interpretacion se suele
+preferir lambda.1se. -->
+
+### e) Variables que conserva lasso
+
+```{r coef-lasso}
+# coeficientes del lasso con lambda.1se
+coef_lasso <- coef(cv_lasso, s = "lambda.1se")
+
+# nos quedamos solo con los coeficientes distintos de cero
+coef_lasso_df <- data.frame(
+  variable = rownames(coef_lasso),
+  coeficiente = as.numeric(coef_lasso)
+) %>%
+  filter(coeficiente != 0, variable != "(Intercept)") %>%
+  arrange(desc(abs(coeficiente)))
+
+coef_lasso_df
+
+# cuantas variables conserva lasso vs cuantas habia en total
+nrow(coef_lasso_df)
+ncol(x_train)
+```
+
+<!-- COMPLETAR: comentar cuantas variables (dummies) conserva lasso de
+las disponibles y cuales son las principales. -->
+
+### f) Gráfico de los coeficientes más relevantes del lasso
+
+```{r plot-coef-lasso, fig.height=5}
+coef_lasso_df %>%
+  slice_max(abs(coeficiente), n = 15) %>%
+  ggplot(aes(x = reorder(variable, coeficiente), y = coeficiente,
+             fill = coeficiente > 0)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(x = "Variable", y = "Coeficiente",
+       title = "Coeficientes más relevantes del modelo lasso",
+       subtitle = "Positivos: aumentan el riesgo de rotación. Negativos: lo reducen") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar el grafico. Los coeficientes positivos
+(tipicamente OverTimeYes, algunos cargos, frecuencia de viajes) se
+asocian a mayor rotacion; los negativos (satisfaccion, antiguedad,
+stock options) actuan como factores protectores. -->
+
+### g) Comparación lasso vs AIC
+
+```{r comparacion-lasso-aic}
+# variables seleccionadas por AIC (a nivel de variable original)
+all.vars(formula(modelo_aic))[-1]
+
+# variables (dummies) conservadas por lasso
+coef_lasso_df$variable
+```
+
+<!-- COMPLETAR: comparar ambas listas. Ojo con un detalle: AIC
+selecciona variables completas (ej: JobRole entero), mientras que lasso
+selecciona dummies individuales (ej: solo JobRoleSales Representative).
+Lo esperable es un nucleo comun (OverTime, satisfaccion, variables de
+antiguedad) con diferencias en los bordes. -->
+
+### Discusión
+
+<!-- COMPLETAR las cuatro preguntas. Ideas centrales:
+
+a) Lasso, con lambda.1se, tipicamente selecciona un conjunto igual o
+   mas pequeño que AIC. Comparar los numeros obtenidos.
+
+b) NO. Ridge encoge los coeficientes pero nunca los lleva exactamente
+   a cero: conserva todas las variables. Se puede verificar contando
+   los coeficientes distintos de cero de cv_ridge.
+
+c) Para interpretacion es mas util lasso: entrega un modelo con pocas
+   variables, facil de comunicar.
+
+d) Para prediccion depende de los datos y se evaluara empiricamente en
+   3.6. Ridge suele rendir bien cuando hay muchas variables
+   correlacionadas que aportan de a poco; lasso cuando pocas variables
+   concentran la señal. -->
+
