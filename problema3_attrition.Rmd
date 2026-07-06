@@ -680,9 +680,7 @@ modelo_pca <- glm(Attrition ~ ., data = pcs_train, family = binomial)
 summary(modelo_pca)
 ```
 
-<!-- COMPLETAR (opcional pero recomendado): comentar que componentes
-resultan significativos. Como los PCs no estan correlacionados entre
-si, cada coeficiente se interpreta de forma independiente. -->
+Como los componentes principales no están correlacionados entre sí, cada coeficiente se puede interpretar de forma independiente. Al revisar el summary se ve que solo algunos componentes resultan significativos, lo que sugiere que buena parte de la varianza que capturan los PCs no tiene relación directa con la rotación.
 
 ```{r evaluacion-pca}
 # probabilidades predichas en el test y comparacion con los 4 modelos
@@ -702,36 +700,19 @@ matriz_confusion(prob_pca, attr_test$Attrition)
 
 ### a) ¿El modelo basado en PCA mejora o empeora la predicción?
 
-<!-- COMPLETAR con la tabla resultados_final: comparar AUC, sensibilidad
-y balanced accuracy del modelo PCA contra los otros cuatro. Lo
-esperable es que quede en un rango similar o levemente inferior:
-PCA comprime las variables sin mirar la respuesta, por lo que puede
-perder algo de señal predictiva. Ademas, este modelo solo usa las
-variables NUMERICAS: pierde predictores categoricos importantes como
-OverTime y JobRole, lo que ayuda a explicar un rendimiento menor. -->
+Empeora, y bastante. El modelo basado en componentes principales tuvo el peor desempeño de los cinco: AUC de 0,657 (muy por debajo del 0,804 del AIC), balanced accuracy de 0,506 —prácticamente lo mismo que clasificar al azar— y una sensibilidad de 0,012: detectó solo 1 de los 82 trabajadores que renunciaron en el conjunto de prueba. Su accuracy de 0,816 engaña, porque viene casi completo de predecir "No" para todos.
 
 ### b) ¿Qué se gana al aplicar PCA antes de la regresión?
 
-<!-- COMPLETAR. Ideas: (1) reduccion de dimensionalidad: menos
-predictores; (2) elimina la multicolinealidad, ya que los componentes
-son ortogonales (no correlacionados) entre si; (3) puede estabilizar
-la estimacion cuando hay muchas variables redundantes. -->
+En teoría se gana reducción de dimensionalidad (pasamos de 16 variables a 9 componentes) y se elimina la multicolinealidad, porque los componentes son ortogonales entre sí, es decir, no están correlacionados. Eso puede estabilizar la estimación cuando hay muchas variables redundantes. En nuestro caso esas ventajas no se tradujeron en mejor predicción.
 
 ### c) ¿Qué se pierde en términos de interpretación?
 
-<!-- COMPLETAR. Idea: los coeficientes ya no refieren a variables
-concretas sino a combinaciones de ellas. Un odds ratio de "PC1" no es
-accionable para la organizacion sin volver a las cargas y traducirlo,
-lo que hace la comunicacion de resultados mucho mas indirecta. -->
+Se pierde la interpretación directa. Los coeficientes ya no refieren a variables concretas sino a combinaciones de ellas: un odds ratio de "PC1" no le dice nada útil a recursos humanos sin antes volver a las cargas y traducirlo ("PC1 era seniority, así que..."). La comunicación de resultados se vuelve mucho más indirecta.
 
 ### d) ¿Recomendaría PCA para este problema?
 
-<!-- COMPLETAR con opinion del grupo, justificada con los resultados.
-Argumento tipico: para PREDECIR rotacion no se recomienda, porque no
-mejora el desempeño y ademas excluye variables categoricas clave
-(OverTime, JobRole); para EXPLORAR la estructura de los datos y para
-visualizar/clusterizar (secciones 3.7 y 3.9) si es una herramienta
-valiosa. -->
+Para predecir en este problema, no, por dos razones. Primero, el modelo PCA solo pudo usar las 16 variables numéricas, y quedaron fuera los predictores más importantes que identificamos en todas las secciones anteriores: OverTime, JobRole, la satisfacción laboral y el estado civil. Fue como jugar el partido sin los mejores jugadores del equipo. Segundo, PCA comprime buscando máxima varianza sin mirar la respuesta: las direcciones que más varían no son necesariamente las que mejor predicen la rotación. Donde PCA sí mostró valor fue como herramienta exploratoria y de visualización (secciones 3.7 y 3.9), pero no como preprocesamiento para predecir.
 
 ## 3.9 Clustering de perfiles laborales
 
