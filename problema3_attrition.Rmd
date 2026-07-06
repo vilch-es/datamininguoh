@@ -658,3 +658,121 @@ seleccion de variables. Ridge es el menos interpretable (conserva
 todas las variables). Lo tipico es recomendar AIC o lasso como
 equilibrio entre simplicidad y desempeño. -->
 
+## 3.7 PCA aplicado a variables laborales numéricas
+
+PCA busca "super-variables" (componentes principales) que resumen la
+informacion de muchas variables numericas correlacionadas. Cada
+componente es una combinacion ponderada de las variables originales, y
+vienen ordenados por la cantidad de varianza que explican.
+
+```{r pca-datos}
+library(factoextra)
+
+# seleccionamos solo las variables numericas del set de entrenamiento
+datos_num <- attr_train %>%
+  select(where(is.numeric))
+
+names(datos_num)
+
+# aplicamos PCA estandarizando las variables (scale. = TRUE).
+# esto es clave: sin estandarizar, las variables con unidades grandes
+# (ej: MonthlyIncome) dominarian los componentes solo por su escala.
+pca_attr <- prcomp(datos_num, scale. = TRUE)
+```
+
+### a) b) c) Varianza explicada
+
+```{r pca-varianza}
+# tabla resumen: varianza explicada por cada componente y acumulada
+summary(pca_attr)
+
+# varianza explicada de forma mas legible
+var_exp <- tibble(
+  componente = 1:length(pca_attr$sdev),
+  varianza = pca_attr$sdev^2 / sum(pca_attr$sdev^2),
+  acumulada = cumsum(varianza)
+)
+
+var_exp %>% mutate(across(where(is.numeric), ~ round(., 3)))
+
+# cuantos componentes se necesitan para superar el 80%
+min(which(var_exp$acumulada >= 0.80))
+```
+
+<!-- COMPLETAR: reportar el % de varianza de PC1, el de PC2, y cuantos
+componentes se necesitan para llegar al 80%. Comentario esperable: en
+este dataset la varianza esta muy repartida (PC1 explica un porcentaje
+moderado), lo que indica que las variables no se resumen en una o dos
+dimensiones dominantes. -->
+
+### Scree plot
+
+```{r scree-plot, fig.height=4}
+fviz_screeplot(pca_attr, ncp = 15, addlabels = TRUE) +
+  labs(title = "Scree plot: varianza explicada por componente",
+       x = "Componente principal", y = "% de varianza explicada")
+```
+
+### d) e) Cargas de PC1 y PC2
+
+```{r pca-cargas}
+# cargas (loadings): cuanto aporta cada variable a cada componente.
+# mostramos las variables ordenadas por su carga absoluta en PC1 y PC2
+cargas <- as.data.frame(pca_attr$rotation[, 1:2]) %>%
+  rownames_to_column("variable")
+
+# top variables en PC1
+cargas %>% arrange(desc(abs(PC1))) %>% head(10)
+
+# top variables en PC2
+cargas %>% arrange(desc(abs(PC2))) %>% head(10)
+```
+
+```{r pca-contribucion, fig.height=4}
+# contribucion de variables a PC1 y PC2
+fviz_contrib(pca_attr, choice = "var", axes = 1, top = 10) +
+  labs(title = "Contribución de variables a PC1")
+
+fviz_contrib(pca_attr, choice = "var", axes = 2, top = 10) +
+  labs(title = "Contribución de variables a PC2")
+```
+
+<!-- COMPLETAR d) y e): listar las variables con mayor carga en cada
+componente segun los outputs. Lo esperable en este dataset:
+- PC1: variables de antiguedad/experiencia e ingreso (TotalWorkingYears,
+  JobLevel, MonthlyIncome, YearsAtCompany, Age...).
+- PC2: variables de permanencia en el rol actual (YearsInCurrentRole,
+  YearsWithCurrManager, YearsSinceLastPromotion...). -->
+
+### Gráfico PC1 vs PC2 coloreado por Attrition
+
+```{r pca-scatter, fig.height=5}
+# proyectamos a cada trabajador en el espacio de los dos primeros
+# componentes y coloreamos segun si renuncio o no
+scores <- as.data.frame(pca_attr$x[, 1:2]) %>%
+  mutate(Attrition = attr_train$Attrition)
+
+scores %>%
+  ggplot(aes(x = PC1, y = PC2, color = Attrition)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Trabajadores en el espacio PC1-PC2",
+       subtitle = "Coloreado según rotación laboral") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar el grafico. Lo esperable es que los casos
+de rotacion NO formen un grupo perfectamente separado, pero se
+concentren hacia un sector del espacio (tipicamente el lado de menor
+experiencia/ingreso de PC1). -->
+
+### f) Interpretación conceptual de PC1 y PC2
+
+<!-- COMPLETAR usando las cargas. Estructura sugerida:
+- PC1 puede interpretarse como un eje de "seniority": combina edad,
+  años trabajados, nivel de cargo e ingreso. Valores altos = perfiles
+  senior y bien remunerados; valores bajos = perfiles junior.
+- PC2 puede interpretarse como "estancamiento/permanencia en el rol
+  actual": años en el mismo rol, con el mismo jefe y desde el ultimo
+  ascenso.
+Justificar SIEMPRE con las variables que cargan mas en cada uno. -->
+
