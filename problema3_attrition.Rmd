@@ -527,42 +527,23 @@ legend("bottomright",
 
 ### a) ¿Cuál modelo tiene mayor AUC?
 
-<!-- COMPLETAR con la tabla de resultados: indicar el modelo con mayor
-AUC y comentar si las diferencias entre modelos son grandes o pequeñas
-(tipicamente todos quedan en un rango parecido, 0.80-0.87). -->
+El modelo seleccionado por AIC tiene el mayor AUC (0,804), seguido de cerca por ridge (0,798), lasso (0,780) y el logístico de 3.3 (0,755). Las diferencias entre los tres primeros son chicas (menos de 0,03), así que los tres ordenan el riesgo de forma parecida. El modelo interpretable queda algo más atrás, probablemente porque usa menos variables.
 
 ### b) ¿Cuál modelo tiene mejor sensibilidad?
 
-<!-- COMPLETAR con la tabla. Ojo: es probable que TODAS las
-sensibilidades sean bajas (menores a 0.5) con el umbral de 0.5.
-Esto se debe al desbalance de clases: como "No" es mayoria, los
-modelos tienden a predecir "No" y se les escapan renuncias reales.
-Vale la pena comentarlo: una solucion practica es bajar el umbral
-(ej: 0.3) para ganar sensibilidad a costa de especificidad. -->
+El modelo AIC tiene la mejor sensibilidad (0,402): detectó 33 de los 82 trabajadores que efectivamente renunciaron en el conjunto de prueba. Aun así, todas las sensibilidades son bajas con el umbral estándar de 0,5. El caso más llamativo es ridge: tiene buen AUC (0,798) pero sensibilidad de apenas 0,110 (detectó solo 9 de 82). ¿Cómo puede ser? Porque el AUC mide si el modelo ordena bien el riesgo, y ridge ordena bien, pero sus probabilidades son todas "tímidas" y casi ninguna pasa del 0,5. Todo esto es consecuencia del desbalance de clases: como la clase "No" domina, los modelos asignan probabilidades de renuncia bajas en general. Una solución práctica sería bajar el umbral (por ejemplo a 0,3) para ganar sensibilidad, aceptando más falsas alarmas.
 
 ### c) ¿Por qué accuracy puede ser engañosa con desbalance?
 
-<!-- COMPLETAR. Idea: con 84% de "No", un modelo que prediga siempre
-"No" alcanza ~84% de accuracy sin detectar ni una sola renuncia
-(sensibilidad = 0). El accuracy queda dominado por la clase mayoritaria
-y esconde el desempeño en la clase que realmente interesa. Por eso se
-reportan tambien sensibilidad, balanced accuracy y AUC. -->
+En nuestro conjunto de prueba el 81% de los casos son "No". Un modelo trivial que predijera "No" para todos tendría accuracy de 0,81 con sensibilidad cero. De hecho ridge (accuracy 0,830) apenas supera ese piso a pesar de detectar solo 9 renuncias de 82: su accuracy se sostiene casi completo en la clase mayoritaria. Por eso la balanced accuracy es más informativa acá: castiga a ridge (0,552, apenas sobre el azar) y premia al AIC (0,673).
 
 ### d) ¿Qué modelo recomendaría para detectar casos de rotación?
 
-<!-- COMPLETAR. Criterio: el de mayor sensibilidad y AUC (mirar tabla).
-Mencionar ademas que, si el objetivo es deteccion, conviene ajustar el
-umbral de clasificacion por debajo de 0.5 para capturar mas casos
-positivos, aceptando mas falsas alarmas. -->
+Recomendaríamos el modelo seleccionado por AIC: tiene al mismo tiempo el mayor AUC (0,804), la mayor sensibilidad (0,402) y la mejor balanced accuracy (0,673). Y si el objetivo es detección, además sugeriríamos bajar el umbral de clasificación: como el modelo ordena bien el riesgo, un umbral menor a 0,5 capturaría más casos reales de rotación a cambio de revisar más falsos positivos, un costo razonable si la intervención es de apoyo y no de castigo.
 
 ### e) ¿Qué modelo recomendaría para explicar los factores asociados?
 
-<!-- COMPLETAR. Criterio: interpretabilidad. El modelo logistico
-interpretable (3.3) o el seleccionado por AIC permiten leer odds
-ratios variable por variable; lasso tambien es interpretable por su
-seleccion de variables. Ridge es el menos interpretable (conserva
-todas las variables). Lo tipico es recomendar AIC o lasso como
-equilibrio entre simplicidad y desempeño. -->
+Para explicar los factores asociados, los más adecuados son el logístico interpretable de 3.3 y el modelo AIC, porque permiten leer odds ratios variable por variable. Entre los dos, el AIC ofrece el mejor equilibrio: es casi igual de interpretable y además resultó ser el de mejor desempeño predictivo. Lasso es una alternativa razonable por su selección de variables, y ridge es el menos interpretable porque conserva los 59 predictores.
 
 ## 3.7 PCA aplicado a variables laborales numéricas
 
