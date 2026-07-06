@@ -43,9 +43,7 @@ glimpse(attrition)
 colSums(is.na(attrition))
 ```
 
-<!-- COMPLETAR: comentar aqui cuantas filas y columnas tiene el dataset,
-cuantas variables son numericas y cuantas categoricas, y confirmar que
-no hay valores perdidos (todos los conteos de NA dan 0). -->
+El dataset tiene 1.470 trabajadores y 31 variables. Hay 16 variables numéricas (como Age, MonthlyIncome o YearsAtCompany) y 15 categóricas: algunas son categorías sin orden como JobRole o OverTime, y otras son escalas ordenadas como JobSatisfaction o WorkLifeBalance. Al revisar los valores perdidos, todas las columnas dan 0 NAs, así que no vamos a necesitar imputar nada.
 
 ### c) Distribución de la variable respuesta
 
@@ -57,12 +55,7 @@ attrition %>%
 
 ### d) Desbalance de clases
 
-<!-- COMPLETAR: aqui va la discusion del desbalance. Idea central:
-aprox 84% No vs 16% Yes. Consecuencia: un modelo que prediga siempre
-"No" tendria un accuracy alto (~84%) pero seria inutil, porque no
-detectaria a ningun trabajador que renuncia. Por eso mas adelante
-usaremos metricas como sensibilidad, balanced accuracy y AUC ademas
-del accuracy. -->
+La variable respuesta está bastante desbalanceada: el 83,9% de los trabajadores se quedó en la empresa (1.233 casos) y solo el 16,1% renunció (237 casos). Esto es un problema para la predicción, porque un modelo que dijera "No" para todo el mundo acertaría como el 84% de las veces sin detectar ni una sola renuncia, que es justo lo que nos interesa. Por eso más adelante no vamos a mirar solo el accuracy, sino también la sensibilidad, la balanced accuracy y el AUC.
 
 ### e) Partición entrenamiento / prueba (70/30)
 
@@ -85,10 +78,7 @@ prop.table(table(attr_train$Attrition))
 prop.table(table(attr_test$Attrition))
 ```
 
-<!-- COMPLETAR: comentar que la particion es 70/30, que se uso set.seed
-para reproducibilidad, y que ambas particiones mantienen una proporcion
-de rotacion similar a la del dataset completo. Esta misma particion se
-usara para TODOS los modelos del problema. -->
+Separamos los datos en 70% entrenamiento (1.029 filas) y 30% prueba (441 filas), usando set.seed para que la partición sea siempre la misma y el informe sea reproducible. Verificamos que la proporción de rotación se mantiene parecida en ambos conjuntos. Esta misma partición se usa para todos los modelos del problema, así la comparación entre ellos es justa.
 
 ### f) Variables numéricas y categóricas
 
@@ -102,29 +92,17 @@ vars_cat
 
 ### g) Estrategia de preprocesamiento
 
-<!-- COMPLETAR: redactar con sus palabras la estrategia. Puntos que
-debe cubrir (uno por parrafo corto o en una lista):
+Nuestra estrategia de preprocesamiento tiene cinco pasos:
 
-1. Factores: las variables categoricas ya vienen como factores en este
-   dataset (se verifica con glimpse), por lo que no requieren conversion.
+1. **Factores:** las variables categóricas ya vienen como factores en esta versión del dataset (lo verificamos con glimpse), así que no hay que convertir nada.
 
-2. Variables dummy: los modelos regularizados (ridge/lasso, seccion 3.5)
-   solo aceptan matrices numericas, por lo que las categoricas se
-   convertiran en variables 0/1 usando model.matrix().
+2. **Variables dummy:** los modelos ridge y lasso de la sección 3.5 solo aceptan matrices numéricas, así que las categóricas se van a convertir en columnas de 0 y 1 usando model.matrix(). Por ejemplo, OverTime pasa a ser una columna OverTimeYes que vale 1 si la persona hace horas extra.
 
-3. Estandarizacion: las variables numericas tienen escalas muy distintas
-   (ej: MonthlyIncome llega a miles, JobSatisfaction va de 1 a 4).
-   PCA, clustering y la regresion penalizada son sensibles a la escala,
-   asi que se estandarizara (media 0, desviacion 1). Nota importante:
-   los parametros de estandarizacion se calculan SOLO con entrenamiento
-   y luego se aplican a prueba, para evitar data leakage.
+3. **Estandarización:** las variables numéricas están en escalas muy distintas (MonthlyIncome llega a miles y JobSatisfaction va de 1 a 4). Como PCA, clustering y la regresión penalizada son sensibles a la escala, hay que estandarizar (media 0, desviación 1). Algo importante: los parámetros de la estandarización se calculan solo con entrenamiento y después se aplican a prueba, para no filtrar información del test (data leakage).
 
-4. Varianza cero o casi cero: variables que toman (casi) el mismo valor
-   para todos los trabajadores no aportan informacion para discriminar
-   y se eliminan.
+4. **Varianza cero o casi cero:** una variable que vale casi lo mismo para todos no sirve para diferenciar a nadie, así que se revisa y se elimina si aparece alguna.
 
-5. Valores perdidos: se verifico en b) que no existen, por lo que no se
-   requiere imputacion. -->
+5. **Valores perdidos:** ya verificamos que no hay, así que no se necesita imputación.
 
 ```{r varianza-cero}
 # buscamos variables con varianza casi cero de forma manual:
@@ -135,8 +113,7 @@ attr_train %>%
   arrange(n_valores)
 ```
 
-<!-- COMPLETAR: comentar si aparece alguna variable con un solo valor
-(varianza cero) y decidir si se elimina. -->
+Ninguna variable numérica tiene un único valor, o sea que no hay variables con varianza cero que eliminar. La que tiene menos valores distintos es PerformanceRating (solo toma dos valores), pero igual aporta algo de información así que decidimos mantenerla.
 
 ## 3.2 Visualización exploratoria
 
