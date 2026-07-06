@@ -138,3 +138,115 @@ attr_train %>%
 <!-- COMPLETAR: comentar si aparece alguna variable con un solo valor
 (varianza cero) y decidir si se elimina. -->
 
+## 3.2 Visualización exploratoria
+
+Todos los graficos se construyen con los datos de **entrenamiento**,
+para no "mirar" el conjunto de prueba antes de la evaluacion final.
+
+### a) Rotación según OverTime
+
+```{r plot-overtime}
+attr_train %>%
+  ggplot(aes(x = OverTime, fill = Attrition)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proporción", x = "Horas extra",
+       title = "Rotación laboral según horas extra") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar. Idea: la proporcion de rotacion es
+claramente mayor entre quienes hacen horas extra. -->
+
+### b) Ingreso mensual según Attrition
+
+```{r plot-ingreso}
+attr_train %>%
+  ggplot(aes(x = Attrition, y = MonthlyIncome, fill = Attrition)) +
+  geom_boxplot() +
+  labs(title = "Ingreso mensual según rotación",
+       y = "Ingreso mensual", x = "Rotación") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar. Idea: la mediana de ingreso de quienes
+renuncian es mas baja. -->
+
+### c) Edad y Attrition
+
+```{r plot-edad}
+attr_train %>%
+  ggplot(aes(x = Age, fill = Attrition)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribución de edad según rotación",
+       x = "Edad", y = "Densidad") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar. Idea: la curva de quienes renuncian esta
+desplazada hacia edades mas jovenes (aprox 25-35 años). -->
+
+### d) Rotación según JobRole
+
+```{r plot-cargo, fig.height=5}
+attr_train %>%
+  ggplot(aes(x = fct_rev(fct_infreq(JobRole)), fill = Attrition)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  labs(x = "Cargo", y = "Proporción",
+       title = "Rotación laboral según cargo") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar. Idea: algunos cargos (tipicamente Sales
+Representative y Laboratory Technician) concentran mayor rotacion,
+mientras que cargos directivos casi no rotan. -->
+
+### e) Años en la empresa y Attrition
+
+```{r plot-anios}
+attr_train %>%
+  ggplot(aes(x = Attrition, y = YearsAtCompany, fill = Attrition)) +
+  geom_boxplot() +
+  labs(title = "Años en la empresa según rotación",
+       y = "Años en la empresa", x = "Rotación") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar. Idea: quienes renuncian llevan menos años.
+El riesgo parece concentrarse en los primeros años y luego se aplana,
+lo que sugiere una relacion NO lineal (util para la pregunta final
+de esta seccion). -->
+
+### f) Visualización adicional: ¿el efecto de las horas extra depende del sueldo?
+
+Hipotesis del grupo: hacer horas extra se asocia a mayor rotacion,
+pero el efecto es mas fuerte cuando el sueldo es bajo.
+
+```{r plot-hipotesis}
+attr_train %>%
+  ggplot(aes(x = OverTime, y = MonthlyIncome, fill = Attrition)) +
+  geom_boxplot() +
+  labs(title = "Ingreso y horas extra según rotación",
+       subtitle = "¿El efecto de las horas extra depende del sueldo?",
+       x = "Horas extra", y = "Ingreso mensual") +
+  theme_minimal()
+```
+
+<!-- COMPLETAR: interpretar. Idea: dentro del grupo con horas extra,
+quienes renuncian tienen sueldos claramente mas bajos. La combinacion
+"horas extra + sueldo bajo" concentra la rotacion, lo que sugiere una
+posible interaccion entre ambas variables. -->
+
+### Preguntas de interpretación
+
+<!-- COMPLETAR usando lo observado en los graficos:
+
+a) Variables asociadas a mayor rotacion: OverTime = Yes, ingreso bajo,
+   menor edad, pocos años en la empresa, ciertos cargos.
+
+b) Patrones utiles para el modelo: las variables anteriores son
+   candidatas a resultar significativas en la regresion logistica.
+
+c) Relaciones no lineales: YearsAtCompany (riesgo alto los primeros
+   años, luego se estabiliza) y posiblemente Age. -->
+
