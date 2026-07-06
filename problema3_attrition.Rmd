@@ -530,3 +530,131 @@ d) Para prediccion depende de los datos y se evaluara empiricamente en
    correlacionadas que aportan de a poco; lasso cuando pocas variables
    concentran la señal. -->
 
+## 3.6 Evaluación predictiva
+
+Comparamos los cuatro modelos en el conjunto de prueba (30% de los
+datos, nunca usado para ajustar). Cada modelo entrega una probabilidad
+de rotacion por trabajador; con un umbral de 0.5 la convertimos en una
+prediccion Yes/No y calculamos las metricas.
+
+```{r predicciones-test}
+library(pROC)
+
+# probabilidades predichas en el conjunto de prueba por cada modelo.
+# type = "response" entrega probabilidades (no log-odds)
+prob_log   <- predict(modelo_log,      newdata = attr_test, type = "response")
+prob_aic   <- predict(modelo_aic,      newdata = attr_test, type = "response")
+prob_ridge <- as.numeric(predict(cv_ridge, newx = x_test,
+                                 s = "lambda.1se", type = "response"))
+prob_lasso <- as.numeric(predict(cv_lasso, newx = x_test,
+                                 s = "lambda.1se", type = "response"))
+```
+
+```{r funcion-metricas}
+# funcion que calcula todas las metricas para un vector de probabilidades
+calcular_metricas <- function(prob, real, umbral = 0.5) {
+  pred <- factor(ifelse(prob >= umbral, "Yes", "No"),
+                 levels = c("No", "Yes"))
+
+  mc <- table(Prediccion = pred, Real = real)
+
+  vp <- mc["Yes", "Yes"]  # verdaderos positivos
+  vn <- mc["No", "No"]    # verdaderos negativos
+  fp <- mc["Yes", "No"]   # falsos positivos
+  fn <- mc["No", "Yes"]   # falsos negativos
+
+  sens <- vp / (vp + fn)  # de los que renunciaron, cuantos detecto
+  espec <- vn / (vn + fp) # de los que se quedaron, cuantos clasifico bien
+
+  tibble(
+    accuracy = (vp + vn) / sum(mc),
+    sensibilidad = sens,
+    especificidad = espec,
+    balanced_accuracy = (sens + espec) / 2,
+    auc = as.numeric(pROC::auc(real, prob, quiet = TRUE))
+  )
+}
+```
+
+```{r tabla-metricas}
+resultados <- bind_rows(
+  calcular_metricas(prob_log,   attr_test$Attrition) %>% mutate(modelo = "Logistico"),
+  calcular_metricas(prob_aic,   attr_test$Attrition) %>% mutate(modelo = "AIC"),
+  calcular_metricas(prob_ridge, attr_test$Attrition) %>% mutate(modelo = "Ridge"),
+  calcular_metricas(prob_lasso, attr_test$Attrition) %>% mutate(modelo = "Lasso")
+) %>%
+  select(modelo, everything()) %>%
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+resultados
+```
+
+```{r matrices-confusion}
+# matrices de confusion de cada modelo (umbral 0.5)
+matriz_confusion <- function(prob, real, umbral = 0.5) {
+  pred <- factor(ifelse(prob >= umbral, "Yes", "No"),
+                 levels = c("No", "Yes"))
+  table(Prediccion = pred, Real = real)
+}
+
+matriz_confusion(prob_log,   attr_test$Attrition)
+matriz_confusion(prob_aic,   attr_test$Attrition)
+matriz_confusion(prob_ridge, attr_test$Attrition)
+matriz_confusion(prob_lasso, attr_test$Attrition)
+```
+
+```{r curvas-roc, fig.height=5}
+# curvas ROC de los cuatro modelos en un mismo grafico
+roc_log   <- roc(attr_test$Attrition, prob_log,   quiet = TRUE)
+roc_aic   <- roc(attr_test$Attrition, prob_aic,   quiet = TRUE)
+roc_ridge <- roc(attr_test$Attrition, prob_ridge, quiet = TRUE)
+roc_lasso <- roc(attr_test$Attrition, prob_lasso, quiet = TRUE)
+
+plot(roc_log, col = "black", main = "Curvas ROC en el conjunto de prueba")
+lines(roc_aic,   col = "blue")
+lines(roc_ridge, col = "red")
+lines(roc_lasso, col = "darkgreen")
+legend("bottomright",
+       legend = c("Logistico", "AIC", "Ridge", "Lasso"),
+       col = c("black", "blue", "red", "darkgreen"), lwd = 2)
+```
+
+### a) ¿Cuál modelo tiene mayor AUC?
+
+<!-- COMPLETAR con la tabla de resultados: indicar el modelo con mayor
+AUC y comentar si las diferencias entre modelos son grandes o pequeñas
+(tipicamente todos quedan en un rango parecido, 0.80-0.87). -->
+
+### b) ¿Cuál modelo tiene mejor sensibilidad?
+
+<!-- COMPLETAR con la tabla. Ojo: es probable que TODAS las
+sensibilidades sean bajas (menores a 0.5) con el umbral de 0.5.
+Esto se debe al desbalance de clases: como "No" es mayoria, los
+modelos tienden a predecir "No" y se les escapan renuncias reales.
+Vale la pena comentarlo: una solucion practica es bajar el umbral
+(ej: 0.3) para ganar sensibilidad a costa de especificidad. -->
+
+### c) ¿Por qué accuracy puede ser engañosa con desbalance?
+
+<!-- COMPLETAR. Idea: con 84% de "No", un modelo que prediga siempre
+"No" alcanza ~84% de accuracy sin detectar ni una sola renuncia
+(sensibilidad = 0). El accuracy queda dominado por la clase mayoritaria
+y esconde el desempeño en la clase que realmente interesa. Por eso se
+reportan tambien sensibilidad, balanced accuracy y AUC. -->
+
+### d) ¿Qué modelo recomendaría para detectar casos de rotación?
+
+<!-- COMPLETAR. Criterio: el de mayor sensibilidad y AUC (mirar tabla).
+Mencionar ademas que, si el objetivo es deteccion, conviene ajustar el
+umbral de clasificacion por debajo de 0.5 para capturar mas casos
+positivos, aceptando mas falsas alarmas. -->
+
+### e) ¿Qué modelo recomendaría para explicar los factores asociados?
+
+<!-- COMPLETAR. Criterio: interpretabilidad. El modelo logistico
+interpretable (3.3) o el seleccionado por AIC permiten leer odds
+ratios variable por variable; lasso tambien es interpretable por su
+seleccion de variables. Ridge es el menos interpretable (conserva
+todas las variables). Lo tipico es recomendar AIC o lasso como
+equilibrio entre simplicidad y desempeño. -->
+
