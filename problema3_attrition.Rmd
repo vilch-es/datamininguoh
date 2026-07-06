@@ -250,3 +250,81 @@ b) Patrones utiles para el modelo: las variables anteriores son
 c) Relaciones no lineales: YearsAtCompany (riesgo alto los primeros
    años, luego se estabiliza) y posiblemente Age. -->
 
+## 3.3 Modelo logístico interpretable
+
+### Ajuste del modelo
+
+```{r modelo-logistico}
+modelo_log <- glm(
+  Attrition ~ Age + MonthlyIncome + OverTime + JobSatisfaction +
+    YearsAtCompany + DistanceFromHome + JobLevel + WorkLifeBalance +
+    TotalWorkingYears + JobRole,
+  data = attr_train,
+  family = binomial
+)
+
+summary(modelo_log)
+```
+
+### Odds ratios
+
+```{r odds-ratios}
+# exponentiate = TRUE transforma los coeficientes en odds ratios
+tidy(modelo_log, exponentiate = TRUE, conf.int = TRUE) %>%
+  mutate(across(where(is.numeric), ~ round(., 3)))
+```
+
+### a) Variables asociadas a mayor probabilidad de rotación
+
+<!-- COMPLETAR: listar las variables con p-valor < 0.05 y OR > 1
+segun la tabla anterior (tipicamente OverTimeYes y algunos JobRole),
+y mencionar tambien los factores protectores (OR < 1 significativos,
+como JobSatisfaction o YearsAtCompany). -->
+
+### b) Interpretación de al menos cinco coeficientes con odds ratios
+
+<!-- COMPLETAR con los valores exactos de la tabla de odds ratios.
+Estructura de cada interpretacion (reemplazar OR_X por el valor real):
+
+1. OverTimeYes (OR = OR_X): un trabajador que hace horas extra tiene
+   OR_X veces las chances de renunciar que uno que no las hace,
+   manteniendo el resto de las variables constantes.
+
+2. JobSatisfaction (OR = OR_X): por cada punto adicional de
+   satisfaccion laboral, las chances de renunciar se multiplican por
+   OR_X (es decir, se reducen en un (1 - OR_X)*100 %).
+
+3. DistanceFromHome (OR = OR_X): cada kilometro adicional de distancia
+   al trabajo aumenta las chances de rotacion en un (OR_X - 1)*100 %.
+
+4. YearsAtCompany (OR = OR_X): cada año adicional en la empresa
+   modifica las chances de renunciar en un factor de OR_X.
+
+5. JobRole... (OR = OR_X): pertenecer a este cargo multiplica las
+   chances de rotacion en OR_X veces EN COMPARACION con la categoria
+   de referencia del factor JobRole.
+
+Nota: recordar mencionar que en variables categoricas el OR se
+interpreta respecto a la categoria de referencia. -->
+
+### c) ¿Qué significa un odds ratio mayor que 1?
+
+<!-- COMPLETAR. Idea: un OR > 1 indica que la variable se asocia con un
+AUMENTO en las chances (odds) de rotacion. Ej: OR = 2 significa que las
+chances se duplican, manteniendo lo demas constante. -->
+
+### d) ¿Qué significa un odds ratio menor que 1?
+
+<!-- COMPLETAR. Idea: un OR < 1 indica un factor protector: la variable
+se asocia con una DISMINUCION de las chances de rotacion. Ej: OR = 0.7
+implica una reduccion del 30% en las chances. -->
+
+### e) Variables útiles para una intervención organizacional
+
+<!-- COMPLETAR. Idea central: la empresa solo puede intervenir sobre
+variables MODIFICABLES. Candidatas: horas extra (reducirlas o
+compensarlas), satisfaccion laboral y work-life balance (clima y
+politicas internas), sueldo en perfiles de riesgo, y teletrabajo o
+flexibilidad para quienes viven lejos. Variables como la edad no son
+intervenibles, aunque sirvan para focalizar. -->
+
