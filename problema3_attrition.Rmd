@@ -328,3 +328,61 @@ politicas internas), sueldo en perfiles de riesgo, y teletrabajo o
 flexibilidad para quienes viven lejos. Variables como la edad no son
 intervenibles, aunque sirvan para focalizar. -->
 
+## 3.4 Selección automática por AIC
+
+El AIC balancea el ajuste del modelo con su complejidad: penaliza los
+modelos con muchas variables. Un menor AIC indica un mejor equilibrio.
+
+```{r modelo-aic, cache=TRUE}
+# modelo completo con todas las variables del dataset
+modelo_completo <- glm(Attrition ~ ., data = attr_train, family = binomial)
+
+# seleccion backward: parte con todo y elimina variables paso a paso.
+# usamos MASS::stepAIC() sin cargar MASS entero para evitar el conflicto
+# de MASS::select() con dplyr::select()
+modelo_aic <- MASS::stepAIC(modelo_completo, direction = "backward",
+                            trace = FALSE)
+
+# variables que sobrevivieron a la seleccion
+formula(modelo_aic)
+```
+
+```{r comparacion-aic}
+# comparacion de AIC entre modelo completo y seleccionado
+AIC(modelo_completo)
+AIC(modelo_aic)
+
+# numero de coeficientes de cada modelo (para comparar complejidad)
+length(coef(modelo_completo))
+length(coef(modelo_aic))
+```
+
+### a) ¿Qué variables fueron seleccionadas?
+
+<!-- COMPLETAR: listar las variables de formula(modelo_aic). -->
+
+### b) ¿El modelo final es más simple que el inicial?
+
+<!-- COMPLETAR: comparar el numero de variables/coeficientes de ambos
+modelos. Lo esperable es que el modelo AIC tenga bastantes menos. -->
+
+### c) ¿Qué variables fueron eliminadas?
+
+<!-- COMPLETAR: listar las variables del modelo completo que NO
+aparecen en formula(modelo_aic). -->
+
+### d) ¿Coinciden con el análisis exploratorio?
+
+<!-- COMPLETAR: comparar con los graficos de 3.2. Lo esperable es que
+OverTime, JobSatisfaction y variables de ingreso/cargo sobrevivan,
+coincidiendo con los patrones observados. Si alguna variable que se
+veia importante en los graficos fue eliminada, comentarlo. -->
+
+### e) ¿Un menor AIC garantiza mejor predicción en datos nuevos?
+
+<!-- COMPLETAR. Idea central: NO. El AIC se calcula unicamente con los
+datos de entrenamiento, por lo que es una aproximacion a la capacidad
+de generalizacion, no una garantia. La unica forma de evaluar el
+desempeño real en datos nuevos es medirlo en el conjunto de prueba,
+lo que se hace en la seccion 3.6. -->
+
