@@ -131,8 +131,7 @@ attr_train %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar. Idea: la proporcion de rotacion es
-claramente mayor entre quienes hacen horas extra. -->
+La diferencia es muy clara: entre quienes hacen horas extra, la proporción que renuncia es bastante mayor que entre quienes no las hacen (aproximadamente el triple). Es el patrón más marcado que encontramos en la exploración y adelanta que OverTime debería ser importante en los modelos.
 
 ### b) Ingreso mensual según Attrition
 
@@ -145,8 +144,7 @@ attr_train %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar. Idea: la mediana de ingreso de quienes
-renuncian es mas baja. -->
+La mediana de ingreso de los que renuncian es claramente más baja que la de los que se quedan. Tiene sentido: con sueldo bajo hay más incentivo para buscar otro trabajo. Igual se ve harta superposición entre las cajas, así que el sueldo por sí solo no separa perfectamente a los dos grupos.
 
 ### c) Edad y Attrition
 
@@ -159,8 +157,7 @@ attr_train %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar. Idea: la curva de quienes renuncian esta
-desplazada hacia edades mas jovenes (aprox 25-35 años). -->
+La curva de los que renuncian está corrida hacia la izquierda: la rotación se concentra en trabajadores jóvenes, más o menos entre los 25 y 35 años. Después de los 40 la renuncia se vuelve mucho menos frecuente.
 
 ### d) Rotación según JobRole
 
@@ -174,9 +171,7 @@ attr_train %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar. Idea: algunos cargos (tipicamente Sales
-Representative y Laboratory Technician) concentran mayor rotacion,
-mientras que cargos directivos casi no rotan. -->
+Hay cargos con mucha más rotación que otros: Sales Representative destaca lejos como el de mayor proporción de renuncias, seguido de Laboratory Technician. En cambio los cargos directivos (Manager, Research Director) casi no rotan. Esto sugiere que el tipo de trabajo importa harto, más allá de las características de la persona.
 
 ### e) Años en la empresa y Attrition
 
@@ -189,10 +184,7 @@ attr_train %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar. Idea: quienes renuncian llevan menos años.
-El riesgo parece concentrarse en los primeros años y luego se aplana,
-lo que sugiere una relacion NO lineal (util para la pregunta final
-de esta seccion). -->
+Los que renuncian llevan claramente menos años en la empresa. Además el riesgo parece concentrarse en los primeros años y después se aplana: no es que cada año baje el riesgo de forma pareja, sino que cae fuerte al principio y luego se estabiliza. Eso sugiere una relación no lineal entre antigüedad y rotación.
 
 ### f) Visualización adicional: ¿el efecto de las horas extra depende del sueldo?
 
@@ -209,23 +201,15 @@ attr_train %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar. Idea: dentro del grupo con horas extra,
-quienes renuncian tienen sueldos claramente mas bajos. La combinacion
-"horas extra + sueldo bajo" concentra la rotacion, lo que sugiere una
-posible interaccion entre ambas variables. -->
+Nuestra hipótesis era que las horas extra pesan más cuando el sueldo es bajo, y el gráfico apunta en esa dirección: dentro del grupo que hace horas extra, los que renuncian tienen sueldos claramente más bajos que los que se quedan. O sea, la combinación "horas extra + sueldo bajo" parece ser la zona de mayor riesgo, lo que sugiere una posible interacción entre ambas variables.
 
 ### Preguntas de interpretación
 
-<!-- COMPLETAR usando lo observado en los graficos:
+a) Las variables que más se asocian a rotación alta según los gráficos son: hacer horas extra, tener sueldo bajo, ser joven, llevar pocos años en la empresa y estar en ciertos cargos (sobre todo Sales Representative y Laboratory Technician).
 
-a) Variables asociadas a mayor rotacion: OverTime = Yes, ingreso bajo,
-   menor edad, pocos años en la empresa, ciertos cargos.
+b) Justamente esos patrones deberían servirle a un modelo predictivo: son las variables candidatas a salir significativas en la regresión logística de la siguiente sección.
 
-b) Patrones utiles para el modelo: las variables anteriores son
-   candidatas a resultar significativas en la regresion logistica.
-
-c) Relaciones no lineales: YearsAtCompany (riesgo alto los primeros
-   años, luego se estabiliza) y posiblemente Age. -->
+c) YearsAtCompany muestra una relación no lineal (el riesgo cae rápido los primeros años y después se estabiliza), y probablemente Age tenga un comportamiento parecido.
 
 ## 3.3 Modelo logístico interpretable
 
