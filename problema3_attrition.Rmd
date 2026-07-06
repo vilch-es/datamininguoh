@@ -586,11 +586,7 @@ var_exp %>% mutate(across(where(is.numeric), ~ round(., 3)))
 min(which(var_exp$acumulada >= 0.80))
 ```
 
-<!-- COMPLETAR: reportar el % de varianza de PC1, el de PC2, y cuantos
-componentes se necesitan para llegar al 80%. Comentario esperable: en
-este dataset la varianza esta muy repartida (PC1 explica un porcentaje
-moderado), lo que indica que las variables no se resumen en una o dos
-dimensiones dominantes. -->
+PC1 explica el 29,1% de la varianza y PC2 el 11,2%; entre los dos acumulan apenas el 40,3%. Para superar el 80% se necesitan 9 componentes (84,3% acumulado). Esto muestra que la varianza está muy repartida: la información de estas variables no se comprime en una o dos dimensiones dominantes. Un detalle importante: el PCA se aplicó sobre las 16 variables numéricas del dataset, porque en la versión de modeldata las variables de satisfacción vienen como factores ordinales y no como números.
 
 ### Scree plot
 
@@ -624,12 +620,9 @@ fviz_contrib(pca_attr, choice = "var", axes = 2, top = 10) +
   labs(title = "Contribución de variables a PC2")
 ```
 
-<!-- COMPLETAR d) y e): listar las variables con mayor carga en cada
-componente segun los outputs. Lo esperable en este dataset:
-- PC1: variables de antiguedad/experiencia e ingreso (TotalWorkingYears,
-  JobLevel, MonthlyIncome, YearsAtCompany, Age...).
-- PC2: variables de permanencia en el rol actual (YearsInCurrentRole,
-  YearsWithCurrManager, YearsSinceLastPromotion...). -->
+En PC1 las cargas más altas son todas de variables de experiencia e ingreso: TotalWorkingYears (0,40), YearsAtCompany (0,39), JobLevel (0,38), MonthlyIncome (0,37), YearsInCurrentRole (0,34) y YearsWithCurrManager (0,33), además de Age (0,27). Todas con el mismo signo, o sea que se mueven juntas.
+
+En PC2 lo que domina es un contraste: NumCompaniesWorked carga fuerte negativo (-0,49) y Age también negativo (-0,37), mientras que YearsWithCurrManager (0,36), YearsInCurrentRole (0,34) y YearsAtCompany (0,28) cargan positivo. Es decir, PC2 opone a la gente que lleva mucho tiempo en la misma empresa contra la que ha pasado por varias empresas distintas.
 
 ### Gráfico PC1 vs PC2 coloreado por Attrition
 
@@ -647,21 +640,13 @@ scores %>%
   theme_minimal()
 ```
 
-<!-- COMPLETAR: interpretar el grafico. Lo esperable es que los casos
-de rotacion NO formen un grupo perfectamente separado, pero se
-concentren hacia un sector del espacio (tipicamente el lado de menor
-experiencia/ingreso de PC1). -->
+Los casos de rotación no forman un grupo aparte, pero sí se concentran hacia el lado de PC1 bajo, o sea el sector de menor experiencia e ingreso. Esto es consistente con todo lo anterior: la rotación se asocia a perfiles junior. La separación igual es difusa, hay renuncias repartidas por todo el espacio.
 
 ### f) Interpretación conceptual de PC1 y PC2
 
-<!-- COMPLETAR usando las cargas. Estructura sugerida:
-- PC1 puede interpretarse como un eje de "seniority": combina edad,
-  años trabajados, nivel de cargo e ingreso. Valores altos = perfiles
-  senior y bien remunerados; valores bajos = perfiles junior.
-- PC2 puede interpretarse como "estancamiento/permanencia en el rol
-  actual": años en el mismo rol, con el mismo jefe y desde el ultimo
-  ascenso.
-Justificar SIEMPRE con las variables que cargan mas en cada uno. -->
+PC1 se puede interpretar como un eje de seniority: combina en un solo número la edad, los años trabajados, el nivel del cargo y el ingreso. Un valor alto de PC1 describe a un trabajador senior y bien pagado; un valor bajo, a un perfil junior. La justificación está en las cargas: todas las variables de experiencia e ingreso cargan fuerte y con el mismo signo.
+
+PC2 se puede interpretar como un eje de estabilidad versus movilidad laboral: opone los años en la misma empresa, rol y jefatura (cargas positivas) contra el número de empresas donde la persona ha trabajado y la edad (cargas negativas). Un PC2 alto describe a alguien "leal" que ha hecho su carrera en la misma empresa; un PC2 bajo, a alguien mayor que ha saltado entre varias empresas.
 
 ## 3.8 Modelo usando componentes principales
 
