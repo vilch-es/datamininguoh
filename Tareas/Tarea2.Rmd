@@ -462,6 +462,7 @@ Basandonos en la tabla y en los gráficos, podemos concluir que los clústeres r
 
 #### 2.6. Clustering jerárquico
 
+a) Construya dendrogramas
 ```{r Inciso 2.6 a)}
 dist_penguins <- dist(penguins_escalado, method = "euclidean")
 
@@ -477,9 +478,10 @@ plot(
 )
 rect.hclust(hc_ward, k = 3, border = 2:4)
 ```
-
+b) Corte el dendrograma en el número de clústeres que considere apropiado.
 ```{r Inciso 2.6 b)}
 penguins_hc <- penguins %>%
+  drop_na(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) %>%
   mutate(cluster_hc = factor(cutree(hc_ward, k = 3)))
 
 penguins_hc %>%
@@ -490,9 +492,16 @@ table(
   Species = penguins_hc$species
 )
 ```
+c) Compare los resultados con los de k-means.
 
+```{r Inciso 2.6 c)}
+# Unimos ambos resultados en un solo dataset limpio
+data_comparacion <- penguins_km %>%
+  mutate(cluster_hc = penguins_hc$cluster_hc) # Agregamos la columna del jerárquico
 
-
-
+# Creamos la tabla cruzada
+table(K_Means = data_comparacion$cluster_kmeans, Jerarquico = data_comparacion$cluster_hc)
+```
+El clúster 1 de k-means y el clúster 2 del jerarquico coinciden perfectamente, al igual que el clúster 2 de k-means y el clúster 1 del jerarquico. No obstante, existe conflicto ya que el clúster 3 de k-means agrupó 87 pingüinos, mientras que el jerarquico mandó 30 a su clúster 1 y 57 a su clúster 3
 
 #Problema 3
