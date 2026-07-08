@@ -80,6 +80,8 @@ a) Cargue el dataset y describa sus variables.
 glimpse(penguins)
   
 ```
+Tenemos variables cualitativas que nos indican la especie del pingüino (Adelie, Chinstrap o Gentoo), su isla de origen (Torgersen, Biscoe o Dream) y el sexo. Por otro lado, tenemos variables cuantitativas que indican el año, la masa corporal en gramos, el largo de la aleta, el largo del pico y la profundidad del pico (estos ultimos 3 medidos en milimetros).
+
 
 b) Seleccione las variables morfológicas numéricas.
 
@@ -106,6 +108,7 @@ penguins_num_clean <- penguins_num %>%
 
 ```
 El resultado nos indica que el porcentaje de valores pérdidos es mínimo. Además, como todas las variables comparten porcentaje, podemos inferir que estos valores pérdidos ocurren en las mismas filas. Por lo que se decide eliminarlos para evitar inventar datos.
+
 
 d) Estandarice las variables antes de aplicar PCA y clustering
 ```{r Inciso 2.1 d)}
@@ -307,22 +310,22 @@ Reduce la dimensionalidad, comprimiendo las 4 variables que nos interesan para p
 set.seed(123)
 
 km2 <- kmeans(
-  x = iris_scaled,
+  x = penguins_escalado,
   centers = 2,
   nstart = 25
 )
 km3 <- kmeans(
-  x = iris_scaled,
+  x = penguins_escalado,
   centers = 3,
   nstart = 25
 )
 km4 <- kmeans(
-  x = iris_scaled,
+  x = penguins_escalado,
   centers = 4,
   nstart = 25
 )
 km5 <- kmeans(
-  x = iris_scaled,
+  x = penguins_escalado,
   centers = 5,
   nstart = 25
 )
@@ -503,5 +506,28 @@ data_comparacion <- penguins_km %>%
 table(K_Means = data_comparacion$cluster_kmeans, Jerarquico = data_comparacion$cluster_hc)
 ```
 El clúster 1 de k-means y el clúster 2 del jerarquico coinciden perfectamente, al igual que el clúster 2 de k-means y el clúster 1 del jerarquico. No obstante, existe conflicto ya que el clúster 3 de k-means agrupó 87 pingüinos, mientras que el jerarquico mandó 30 a su clúster 1 y 57 a su clúster 3
+
+d) ¿Qué método entrega grupos más coherentes con las especies?
+
+```{r Inciso 2.6 d)}
+# Tabla A: K-means vs Especies Reales
+table(K_Means = data_comparacion$cluster_kmeans, Especie_Real = data_comparacion$species)
+
+# Tabla B: Jerárquico vs Especies Reales
+table(Jerarquico = data_comparacion$cluster_hc, Especie_Real = data_comparacion$species)
+```
+### 2.7. Discusión avanzada
+
+a) ¿Por qué el clustering no supervisado no debe evaluarse únicamente por su coincidencia con las especies?
+Porque esta diseñado para agrupar elementos según su cercanía, no sabe lo que es una especie.
+
+b) ¿Qué otros patrones podría estar captando el clustering?
+Ya que se procesa información que indica el tamaño en general del pingüino, podría estar captando patrones como la edad o el sexo del pingüino, debido a que estos factores pueden influir en las variables independientemente de la especie.
+
+c) ¿Qué diferencia hay entre usar PCA para visualización y usar PCA como entrada para clustering?
+Para visualización el PCA nos permite simplemente observar las 4 dimensiones en un gráfica 2D. Al usarlo como entrada para clustering evitamos redundancia de información, en caso de que más de una variable indique algo muy similar.
+
+d) ¿Qué riesgos existen al interpretar los clusters como categorías reales?
+Principalmente, el clustering siempre encontrará grupos aunque no existan según la cantidad de nucleos que le pidamos. Además puede empaquetar (en este caso) un pingüino en un cluster, cuando ese pingüino estaba en un punto medio y realmente pertenecia a otro grupo.
 
 #Problema 3
