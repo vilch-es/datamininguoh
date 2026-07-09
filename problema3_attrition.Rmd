@@ -83,8 +83,8 @@ Separamos los datos en 70% entrenamiento (1.029 filas) y 30% prueba (441 filas),
 ### f) Variables numéricas y categóricas
 
 ```{r tipos-variables}
-vars_num <- attrition %>% select(where(is.numeric)) %>% names()
-vars_cat <- attrition %>% select(where(is.factor)) %>% names()
+vars_num <- attrition %>% dplyr::select(where(is.numeric)) %>% names()
+vars_cat <- attrition %>% dplyr::select(where(is.factor)) %>% names()
 
 vars_num
 vars_cat
@@ -489,7 +489,7 @@ resultados <- bind_rows(
   calcular_metricas(prob_ridge, attr_test$Attrition) %>% mutate(modelo = "Ridge"),
   calcular_metricas(prob_lasso, attr_test$Attrition) %>% mutate(modelo = "Lasso")
 ) %>%
-  select(modelo, everything()) %>%
+  dplyr::select(modelo, everything()) %>%
   mutate(across(where(is.numeric), ~ round(., 3)))
 
 resultados
@@ -557,7 +557,7 @@ library(factoextra)
 
 # seleccionamos solo las variables numericas del set de entrenamiento
 datos_num <- attr_train %>%
-  select(where(is.numeric))
+  dplyr::select(where(is.numeric))
 
 names(datos_num)
 
@@ -667,7 +667,7 @@ pcs_train <- as.data.frame(pca_attr$x[, 1:n_pcs]) %>%
 # IMPORTANTE: el test se proyecta con el PCA ajustado en ENTRENAMIENTO
 # (mismas medias, desviaciones y rotacion). Calcular un PCA nuevo sobre
 # el test seria data leakage y un espacio de coordenadas distinto.
-datos_num_test <- attr_test %>% select(where(is.numeric))
+datos_num_test <- attr_test %>% dplyr::select(where(is.numeric))
 
 pcs_test <- as.data.frame(predict(pca_attr, newdata = datos_num_test)[, 1:n_pcs]) %>%
   mutate(Attrition = attr_test$Attrition)
@@ -690,7 +690,7 @@ resultados_final <- bind_rows(
   resultados,
   calcular_metricas(prob_pca, attr_test$Attrition) %>% mutate(modelo = "PCA + logistica")
 ) %>%
-  select(modelo, everything())
+  dplyr::select(modelo, everything())
 
 resultados_final
 
