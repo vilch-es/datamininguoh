@@ -1,7 +1,11 @@
 ---
 title: "Tarea 2 - Problema 3: Predicción de rotación laboral"
 subtitle: "Minería de Datos"
+<<<<<<< HEAD
 author: "Agustin Vilches, Matias Jara, Benjamin Campos"
+=======
+author: "Agustín Vilches, Matías Jara, Benjamín Campos"
+>>>>>>> 48851e9f147a9c0d3ec1c614362a7953a8403764
 date: "`r Sys.Date()`"
 output:
   pdf_document:
